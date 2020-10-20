@@ -10,5 +10,5 @@ if __name__ == '__main__':
     while True:
         s.write(msg)
         output = s.readline().decode().rstrip()
-        # print(output)
+        print(output)
         time.sleep(1)
