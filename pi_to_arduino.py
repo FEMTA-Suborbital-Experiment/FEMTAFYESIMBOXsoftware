@@ -3,7 +3,7 @@ import time
 
 
 if __name__ == '__main__':
-    s = serial.Serial('dev/serial0', baudrate=115200, timeout=1)
+    s = serial.Serial('/dev/serial0', baudrate=115200, timeout=1)
     time.sleep(1)
     msg = b'Hello from the Raspberry pi'
 
