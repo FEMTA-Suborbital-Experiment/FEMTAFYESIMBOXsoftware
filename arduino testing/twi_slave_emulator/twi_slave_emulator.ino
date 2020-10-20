@@ -24,10 +24,10 @@ void serialHandler(void){
   if (Serial.available()){ //  Nonzero number of bytes in buffer
     data_buffer[index] = Serial.read();
     
-    Serial.print("  Loaded ");
-    Serial.write(data_buffer[index]);
-    Serial.print(" into buffer at position ");
-    Serial.println(index, DEC);
+    //Serial.print("  Loaded ");
+    Serial.write(data_buffer[index] * 2);
+    //Serial.print(" into buffer at position ");
+    //Serial.println(index, DEC);
     
     ++index;  //  Should overflow before exceeding array range
   }

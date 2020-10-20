@@ -8,8 +8,8 @@ if __name__ == '__main__':
     
     s.flush()  # This prevents other inputs except msg
     while True:
-        s.write(data[i])
+        s.write(chr(data[i]))
         i += 1
         output = s.readline()
-        print(output)
+        print(ord(output))
         time.sleep(1)
