@@ -9,6 +9,6 @@ if __name__ == '__main__':
     s.flush()  # This prevents other inputs except msg
     while True:
         s.write(msg)
-        output = s.readline().decode().rstrip()
+        output = s.readline().decode()
         print(output)
         time.sleep(0.2)
