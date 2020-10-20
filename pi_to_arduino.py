@@ -11,4 +11,4 @@ if __name__ == '__main__':
         s.write(msg)
         output = s.readline().decode().rstrip()
         print(output)
-        time.sleep(1)
+        time.sleep(0.2)
