@@ -13,7 +13,7 @@ void serialHandler(void);
 void setup(void){
   //  Start serial communication protocol
   Serial.begin(BAUDRATE);
-  Serial.println("\nConnected to serial port...");
+  //Serial.println("\nConnected to serial port...");
 }
 
 void loop(void){

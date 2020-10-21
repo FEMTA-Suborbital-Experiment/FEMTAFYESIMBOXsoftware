@@ -9,5 +9,8 @@ if __name__ == '__main__':
     while True:
         s.write(bytes([data.__next__()]))
         output = s.readline()
-        print(output)
+        try:
+            print(ord(output))
+        except TypeError:
+            pass
         time.sleep(1)
