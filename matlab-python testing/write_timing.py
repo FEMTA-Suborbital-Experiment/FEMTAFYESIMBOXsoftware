@@ -2,7 +2,7 @@ import datetime
 now = datetime.datetime.now
 from random import random
 
-newdata = [round(random() * 1000, 4) for i in range(12)]
+newdata = [round(random() * 1000, 4) for i in range(15)]
 
 t1 = now()
 with open("sample_data.csv", "w") as f:
