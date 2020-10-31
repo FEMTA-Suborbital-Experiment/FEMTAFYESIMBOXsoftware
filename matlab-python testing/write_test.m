@@ -1,11 +1,5 @@
-fp = 'sample_data.csv';
-load hat.m %High-accuracy timer that I don't know how to use
-
+tic
 data = rand(15);
 data = round(data * 1000, 4);
-time = hat;
-fid = fopen(fp, 'w');
-fprintf(fid, data);
-fclose(fid);
-diff = hat - time;
-fprintf(diff);
+writematrix(data, 'sample_data.csv');
+toc
