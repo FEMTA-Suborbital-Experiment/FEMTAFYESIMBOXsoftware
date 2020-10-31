@@ -1,11 +1,7 @@
-/***************************************************************
- *  twi_slave_emulator
- **************************************************************/
-
 #include "TwoWireSimulator.h"
 #define BAUDRATE 115200 //  Serial port baud rate
 
-TwoWireSimulator Wiresim;
+TwoWireSimulator WireSim;
 
 byte data_buffer[3];  //  Data buffer
 int index = 0;
@@ -40,31 +36,31 @@ void updateMask(int state){
   if (error_state != state){
     switch (state){
       case 0:
-        Wiresim.updateAddresses(0x8,0x19);
+        WireSim.updateAddresses(0x8,0x19);
         error_state = 0;
         break;
       case 1:
-        Wiresim.updateAddresses(0x8,0x1);
+        WireSim.updateAddresses(0x8,0x1);
         error_state = 1;
         break;
       case 2:
-        Wiresim.updateAddresses(0x8,0x10);
+        WireSim.updateAddresses(0x8,0x18);
         error_state = 2;
         break;
       case 3:
-        Wiresim.updateAddresses(0x8,0x1);
+        WireSim.updateAddresses(0x8,0x1);
         error_state = 3;
         break;
       case 5:
-        Wiresim.updateAddresses(0x9,0x0);
+        WireSim.updateAddresses(0x9,0x0);
         error_state = 5;
         break;
       case 6:
-        Wiresim.updateAddresses(0x10,0x0);
+        WireSim.updateAddresses(0x10,0x0);
         error_state = 6;
         break;
       case 7:
-        Wiresim.updateAddresses(0xA,0x0);
+        WireSim.updateAddresses(0xA,0x0);
         error_state = 7;
         break;
       default:
