@@ -32,7 +32,7 @@
 void setup() {
   Wire.begin();
 
-  Serial.begin(9600);
+  Serial.begin(115200);
   while (!Serial); // Leonardo: wait for serial monitor
   Serial.println("\nI2C Scanner");
 }
@@ -40,8 +40,32 @@ void setup() {
 void loop() {
   int nDevices = 0;
 
-  Serial.print("Found: ");
+  Serial.println("Scanning...");
 
+  for (uint8_t addr = 0; addr < 128; ++addr)
+  {
+    Wire.requestFrom(addr, (uint8_t)1);  //  Ask for a byte from each address
+    if (Wire.available())
+    {
+      ++nDevices;
+      Serial.print("  Heard back from 0x");
+      Serial.print(addr, HEX);
+      Serial.print(" : ");
+    }
+    while (Wire.available())    //  Data in the buffer
+    {
+      uint8_t data = Wire.read();
+      Serial.println(data, HEX);
+    }
+  }
+
+  Serial.print("A total of ");
+  Serial.print(nDevices);
+  Serial.println(" devices responded.\n");
+
+  delay(1500);
+  
+/*
   for (byte address = 1; address < 127; ++address) {
     // The i2c_scanner uses the return value of
     // the Write.endTransmisstion to see if
@@ -72,4 +96,5 @@ void loop() {
     Serial.println();
   }
   delay(50); // 20 Hz
+  */
 }
