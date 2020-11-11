@@ -1,3 +1,8 @@
+"""
+Proper, mathenatical way to get calibration inverses.
+Probably too slow to be worth the accuracy.
+"""
+
 from sympy import symbols, Eq, solveset
 from datetime import datetime
 now = datetime.now
