@@ -50,7 +50,7 @@ for pin in GPIO_PINS:
 while True: #While loop for now; look into executing on interval (timeloop lib?)
     #Receive sensor data from Matlab
     [pres0, pres1, pres2, pres3, therm0, therm1, therm2, therm3,
-     dig_flow0, dig_flow1, uv, mass0, mass1, ir_flow0, ir_flow1] = matlab.read()
+     dig_flow0, dig_flow1, dig_temp0, dig_temp1, ir_flow0, ir_flow1] = matlab.read()
     
     #Process data
     add_noise(all_sensors)
@@ -58,9 +58,9 @@ while True: #While loop for now; look into executing on interval (timeloop lib?)
     uncalibrate(thermistors)
     
     #Prepare digital data to send to Arduino
-    #9 bytes for each flow, 8 for UV, 1 for error state, 1 for terminating \n
-    f0_data = flow_conversion(dig_flow0, ??)
-    f1_data = flow_conversion(dig_flow1, ??)
+    #9 bytes for each flow, 10 for UV, 1 for error state, 1 for terminating \n
+    f0_data = flow_conversion(dig_flow0, dig_temp0)
+    f1_data = flow_conversion(dig_flow1, dig_temp1)
     uv_data = uv_conversion(uv)
     digital_data = [*f0_data, *f1_data, *uv_data, ERROR_STATE, 0x0a]
     
