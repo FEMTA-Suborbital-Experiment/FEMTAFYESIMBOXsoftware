@@ -1,11 +1,10 @@
 import smbus
 import math #just for output sine
 
-channel = 1 #??
-address = 0x28 ##DAC #1
-register = 0x4 ##channel 4 (thermistor)
+address = 0x28 #DAC #1
+register = 0x4 #channel 4 (thermistor)
 
-bus = smbus.SMBus(channel)
+bus = smbus.SMBus(1)
 
 i = 0
 while True:

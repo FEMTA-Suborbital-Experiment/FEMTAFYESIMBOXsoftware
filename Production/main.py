@@ -8,8 +8,8 @@ executable, if this program can't do that).
 ERROR_STATE = 0 #Default is to keep this constant
 
 import serial           #USB
-#import smbus            #I2C
-#import socket           #Ethernet (and Matlab?)
+import smbus            #I2C
+#import socket           #Ethernet and Matlab
 #import RPi.GPIO as GPIO #GPIO (valve feedback)
 from flow_conversion import flow_to_bytes
 from add_noise import fuzz
@@ -61,11 +61,11 @@ while True: #While loop for now; look into executing on interval (timeloop lib?)
     mass0, mass1 = make_fake_ms()
     
     #Prepare digital data to send to Arduino
-    #9 bytes for each flow, 10 for UV, 1 for error state, 1 for terminating \n
+    #9 bytes for each flow, 10 for UV, 1 for error state
     f0_data = flow_conversion(sensor_data[8], sensor_data[10])
     f1_data = flow_conversion(sensor_data[9], sensor_data[11])
     uv_data = uv_conversion(uva, uvb, uvc1, uvc2, uvd)
-    digital_data = [*f0_data, *f1_data, *uv_data, ERROR_STATE, 0x0a]
+    digital_data = [*f0_data, *f1_data, *uv_data, ERROR_STATE] #, 0x0a?
     
     #Output data
     i2c.write_i2c_block_data(DAC[0], P[0], sensor_data[0])
@@ -78,7 +78,7 @@ while True: #While loop for now; look into executing on interval (timeloop lib?)
     i2c.write_i2c_block_data(DAC[0], T[3], sensor_data[7])
     
     i2c.write_i2c_block_data(DAC[1], MS[0], mass0)
-    i2c.write_i2c_block_data(DAC[1], MS[1], mass0)
+    i2c.write_i2c_block_data(DAC[1], MS[1], mass1)
     i2c.write_i2c_block_data(DAC[1], IR[0], sensor_data[12])
     i2c.write_i2c_block_data(DAC[1], IR[1], sensor_data[13])
     

@@ -24,7 +24,7 @@ def flow_to_bytes(flow_data, temp_data): #Input flow in ml/min, temp in C
     else:
         high_flow = 0
     
-    #Scale data and make flags byte
+    #Scale data and make the flags byte
     flow_data *= 500
     temp_data *= 200
     flow_data = twos_comp(flow_data)
