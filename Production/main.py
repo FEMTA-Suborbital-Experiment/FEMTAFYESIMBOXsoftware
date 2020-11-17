@@ -9,11 +9,11 @@ FREQUENCY = 20 #Hz
 ERROR_STATE = 0 #Default is to keep this constant
 
 from timeloop import Timeloop
-from datetime import timedelta
+from datetime import datetime, timedelta
 import serial           #USB
 import smbus            #I2C
 #import socket           #Ethernet and Matlab
-#import RPi.GPIO as GPIO #GPIO (valve feedback)
+import RPi.GPIO as GPIO #GPIO (valve feedback)
 from flow_conversion import flow_to_bytes
 from add_noise import fuzz
 
@@ -31,7 +31,7 @@ IR = (0x2, 0x3) #IR flow sensor DAC channels
 GPIO_PINS = (7, 11, 15, 18, 23, 25)
 
 
-#Define calibrations (units (which?) -> voltage)
+#Define (inverse) calibrations (units (which?) -> voltage)
 pres_cals = (lambda x: 0.2698*x + 0.1013, lambda x: 0.2462*x + 0.4404,
              lambda x: 0.2602*x + 0.1049, lambda x: 0)
 therm_cals = (lambda x: 0, lambda x: 0,
@@ -39,6 +39,7 @@ therm_cals = (lambda x: 0, lambda x: 0,
 
 
 #Set up connections (and misc.)
+start_t = 0
 tl = Timeloop()
 i2c = smbus.SMBus(1)
 arduino = serial.Serial('/dev/ttyACM0', baudrate=115200, timeout=1)
@@ -50,6 +51,10 @@ for pin in GPIO_PINS:
 
 @tl.job(interval=timedelta(seconds=1/FREQUENCY))
 def run():
+    #Set start time
+    if not start_t:
+        start_t = datetime.datetime.now()
+    
     #Receive sensor data from Matlab
     sensor_data = list(matlab.read())
     #pres0, pres1, pres2, pres3, therm0, therm1, therm2, therm3,
