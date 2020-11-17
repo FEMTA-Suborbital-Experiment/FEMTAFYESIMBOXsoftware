@@ -5,8 +5,11 @@ no others required (with the possible exception of the Matlab
 executable, if this program can't do that).
 """
 
+FREQUENCY = 20 #Hz
 ERROR_STATE = 0 #Default is to keep this constant
 
+from timeloop import Timeloop
+from datetime import timedelta
 import serial           #USB
 import smbus            #I2C
 #import socket           #Ethernet and Matlab
@@ -35,7 +38,8 @@ therm_cals = (lambda x: 0, lambda x: 0,
               lambda x: 0, lambda x: 0)
 
 
-#Set up connections
+#Set up connections (and misc.)
+tl = Timeloop()
 i2c = smbus.SMBus(1)
 arduino = serial.Serial('/dev/ttyACM0', baudrate=115200, timeout=1)
 arduino.flush()
@@ -44,7 +48,8 @@ for pin in GPIO_PINS:
     GPIO.setup(pin, GPIO.IN)
 
 
-while True: #While loop for now; look into executing on interval (timeloop lib?)
+@tl.job(interval=timedelta(seconds=1/FREQUENCY))
+def run():
     #Receive sensor data from Matlab
     sensor_data = list(matlab.read())
     #pres0, pres1, pres2, pres3, therm0, therm1, therm2, therm3,
@@ -87,3 +92,7 @@ while True: #While loop for now; look into executing on interval (timeloop lib?)
     #Valve feedback
     valves = [GPIO.input(pin) for pin in GPIO_PINS]
     matlab.write(valves)
+    
+    
+if __name__=='__main__':
+    tl.start(block=True)
