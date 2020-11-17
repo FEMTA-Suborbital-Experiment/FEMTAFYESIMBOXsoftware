@@ -23,3 +23,9 @@ def test_func():
     
 def tloop():
     tl.start(block=True)
+    
+if __name__=='__main__':
+    from time import sleep
+    raw_times()
+    sleep(1)
+    tloop()
