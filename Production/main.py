@@ -1,8 +1,7 @@
 """
 Main file to run on Raspberry Pi to coordinate simbox operations.
 The Pi should eventually be configured to run this program on boot,
-no others required (with the possible exception of the Matlab
-executable, if this program can't do that).
+with the only other program running on boot being the Matlab simulation.
 """
 
 FREQUENCY = 20 #Hz
