@@ -4,17 +4,18 @@ The Pi should eventually be configured to run this program on boot,
 with the only other program running on boot being the Matlab simulation.
 """
 
-FREQUENCY = 20 #Hz
-ERROR_STATE = 0 #Default is to keep this constant
-
 from timeloop import Timeloop
 from datetime import datetime, timedelta
 import serial           #USB
-import smbus            #I2C
+from busio import I2C   #I2C
 #import socket           #Ethernet and Matlab
 import RPi.GPIO as GPIO #GPIO (valve feedback)
 from flow_conversion import flow_to_bytes
 from add_noise import fuzz
+
+
+FREQUENCY = 20 #Hz
+ERROR_STATE = 0 #Default is to keep this constant
 
 
 #Define addresses
@@ -27,7 +28,8 @@ IR = (0x2, 0x3) #IR flow sensor DAC channels
 
 
 #Define GPIO pins
-GPIO_PINS = (7, 11, 15, 18, 23, 25)
+GPIO_PINS = 7, 8, 10, 11, 12, 13 #not set in stone
+RED, GRN = 40, 33
 
 
 #Define (inverse) calibrations (units (which?) -> voltage)
@@ -43,7 +45,9 @@ tl = Timeloop()
 i2c = smbus.SMBus(1)
 arduino = serial.Serial('/dev/ttyACM0', baudrate=115200, timeout=1)
 arduino.flush()
-GPIO.setmode(GPIO.board)
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(RED, GPIO.OUT)
+GPIO.setup(GRN, GPIO.OUT)
 for pin in GPIO_PINS:
     GPIO.setup(pin, GPIO.IN)
 
@@ -52,6 +56,7 @@ for pin in GPIO_PINS:
 def run():
     #Set start time
     if not start_t:
+        GPIO.output(GRN, GPIO.HIGH)
         start_t = datetime.datetime.now()
     
     #Receive sensor data from Matlab
@@ -77,19 +82,19 @@ def run():
     digital_data = [*f0_data, *f1_data, *uv_data, ERROR_STATE] #, 0x0a?
     
     #Output data
-    i2c.write_i2c_block_data(DAC[0], P[0], sensor_data[0])
-    i2c.write_i2c_block_data(DAC[0], P[1], sensor_data[1])
-    i2c.write_i2c_block_data(DAC[0], P[2], sensor_data[2])
-    i2c.write_i2c_block_data(DAC[0], P[3], sensor_data[3])
-    i2c.write_i2c_block_data(DAC[0], T[0], sensor_data[4])
-    i2c.write_i2c_block_data(DAC[0], T[1], sensor_data[5])
-    i2c.write_i2c_block_data(DAC[0], T[2], sensor_data[6])
-    i2c.write_i2c_block_data(DAC[0], T[3], sensor_data[7])
+    i2c.writeto(DAC[0], [P[0], sensor_data[0]])
+    i2c.writeto(DAC[0], [P[1], sensor_data[1]])
+    i2c.writeto(DAC[0], [P[2], sensor_data[2]])
+    i2c.writeto(DAC[0], [P[3], sensor_data[3]])
+    i2c.writeto(DAC[0], [T[0], sensor_data[4]])
+    i2c.writeto(DAC[0], [T[1], sensor_data[5]])
+    i2c.writeto(DAC[0], [T[2], sensor_data[6]])
+    i2c.writeto(DAC[0], [T[3], sensor_data[7]])
     
-    i2c.write_i2c_block_data(DAC[1], MS[0], mass0)
-    i2c.write_i2c_block_data(DAC[1], MS[1], mass1)
-    i2c.write_i2c_block_data(DAC[1], IR[0], sensor_data[12])
-    i2c.write_i2c_block_data(DAC[1], IR[1], sensor_data[13])
+    i2c.writeto(DAC[1], [MS[0], mass0])
+    i2c.writeto(DAC[1], [MS[1], mass1])
+    i2c.writeto(DAC[1], [IR[0], sensor_data[12]])
+    i2c.writeto(DAC[1], [IR[1], sensor_data[13]])
     
     arduino.write(bytes(digital_data))
     
