@@ -1,16 +1,31 @@
 from busio import I2C
+import board
 import time
+import RPi.GPIO as GPIO
+import math
 
-import math #just for output sine
-
+RED, GRN = 21, 13
 address = 0x28 #DAC #1
-register = 0x4 #channel 4 (thermistor)
+reg0 = 0x0 #channel 0
+reg1 = 0x1 #channel 1
+GPIO.setup(RED, GPIO.OUT)
+GPIO.setup(GRN, GPIO.OUT)
 
-i2c = I2C(5,3)
+i2c = board.I2C()
 
-i = 0
-while True:
-    msg = math.floor(128 * (math.sin(i/100) + 1))
-    i2c.writeto(address, [register, msg])
-    i += 1
-    time.sleep(0.01)
+try:
+    i = 0
+    GPIO.output(GRN, GPIO.HIGH)
+    while True:
+        msg0 = math.floor(127 * (math.cos(i/100) + 1))
+        msg1 = math.floor(127 * (math.sin(i/100) + 1))
+        i2c.writeto(address, bytes([reg0, msg0, reg1, msg1]))
+        i += 1
+        time.sleep(0.001)
+except IOError as e:
+    GPIO.output(RED, GPIO.HIGH)
+    GPIO.output(GRN, GPIO.LOW)
+    raise e
+finally:
+    GPIO.output(RED, GPIO.LOW)
+    GPIO.output(GRN, GPIO.LOW)
