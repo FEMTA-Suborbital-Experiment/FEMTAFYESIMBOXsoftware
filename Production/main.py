@@ -8,8 +8,9 @@ from timeloop import Timeloop
 from datetime import datetime, timedelta
 import serial           #USB
 from busio import I2C   #I2C
+import board            #I2C
 #import socket           #Ethernet and Matlab
-import RPi.GPIO as GPIO #GPIO (valve feedback)
+import RPi.GPIO as GPIO #GPIO (valve feedback & LEDs)
 from flow_conversion import flow_to_bytes
 from add_noise import fuzz
 
@@ -28,8 +29,8 @@ IR = (0x2, 0x3) #IR flow sensor DAC channels
 
 
 #Define GPIO pins
-GPIO_PINS = 7, 8, 10, 11, 12, 13 #not set in stone
-RED, GRN = 40, 33
+GPIO_PINS = 4, 14, 15, 17, 18, 27 #not set in stone
+RED, GRN = 21, 13
 
 
 #Define (inverse) calibrations (units (which?) -> voltage)
@@ -42,10 +43,9 @@ therm_cals = (lambda x: 0, lambda x: 0,
 #Set up connections (and misc.)
 start_t = 0
 tl = Timeloop()
-i2c = smbus.SMBus(1)
+i2c = board.I2C()
 arduino = serial.Serial('/dev/ttyACM0', baudrate=115200, timeout=1)
 arduino.flush()
-GPIO.setmode(GPIO.BOARD)
 GPIO.setup(RED, GPIO.OUT)
 GPIO.setup(GRN, GPIO.OUT)
 for pin in GPIO_PINS:
@@ -81,21 +81,17 @@ def run():
     uv_data = uv_conversion(uva, uvb, uvc1, uvc2, uvd)
     digital_data = [*f0_data, *f1_data, *uv_data, ERROR_STATE] #, 0x0a?
     
+    #Prepare analog data to send to DACs
+    analog_data_0 = [P[0], sensor_data[0], P[1], sensor_data[1],
+                     P[2], sensor_data[2], P[3], sensor_data[3],
+                     T[0], sensor_data[4], T[1], sensor_data[5],
+                     T[2], sensor_data[6], T[3], sensor_data[7]]
+    analog_data_1 = [MS[0], mass0, MS[1], mass1,
+                     IR[0], sensor_data[12], IR[1], sensor_data[13]]
+    
     #Output data
-    i2c.writeto(DAC[0], [P[0], sensor_data[0]])
-    i2c.writeto(DAC[0], [P[1], sensor_data[1]])
-    i2c.writeto(DAC[0], [P[2], sensor_data[2]])
-    i2c.writeto(DAC[0], [P[3], sensor_data[3]])
-    i2c.writeto(DAC[0], [T[0], sensor_data[4]])
-    i2c.writeto(DAC[0], [T[1], sensor_data[5]])
-    i2c.writeto(DAC[0], [T[2], sensor_data[6]])
-    i2c.writeto(DAC[0], [T[3], sensor_data[7]])
-    
-    i2c.writeto(DAC[1], [MS[0], mass0])
-    i2c.writeto(DAC[1], [MS[1], mass1])
-    i2c.writeto(DAC[1], [IR[0], sensor_data[12]])
-    i2c.writeto(DAC[1], [IR[1], sensor_data[13]])
-    
+    i2c.writeto(DAC[0], analog_data_0)
+    i2c.writeto(DAC[1], analog_data_1)
     arduino.write(bytes(digital_data))
     
     #Valve feedback
@@ -104,4 +100,9 @@ def run():
     
     
 if __name__=='__main__':
-    tl.start(block=True)
+    try:
+        tl.start(block=True)
+    finally:
+        #Clean up by turning off LEDs
+        GPIO.output(GRN, GPIO.LOW)
+        GPIO.output(RED, GPIO.LOW)
