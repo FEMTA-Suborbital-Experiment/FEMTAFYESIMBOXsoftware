@@ -1,3 +1,6 @@
+# Test run on the Pi. Sends out a byte over serial every second, and shows
+# data received over serial.
+
 import serial
 import time
 

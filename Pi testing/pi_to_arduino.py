@@ -1,6 +1,8 @@
+# Test of serial communications, run on the Pi. Sends out a single byte (h), and
+# prints the recieved message.
+
 import serial
 import time
-
 
 if __name__ == '__main__':
     s = serial.Serial('/dev/ttyACM0', baudrate=115200, timeout=1)

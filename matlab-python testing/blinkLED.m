@@ -1,3 +1,6 @@
+% Basic test for deployment of MATLAB frunctions onto the Pi.
+% This program just blinks the Pi's "active" LED.
+
 function blinkLED() %#codegen
 
 % Create a Raspberry Pi object

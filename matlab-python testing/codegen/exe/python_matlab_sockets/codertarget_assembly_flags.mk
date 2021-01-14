@@ -1,0 +1,3 @@
+ASFLAGS_ADDITIONAL = 
+STACK_SIZE = 200000
+TARGET_PKG_INSTALLDIR = C:/PROGRA~3/MATLAB/SupportPackages/R2020b/toolbox/realtime/targets/raspi

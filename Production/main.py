@@ -1,8 +1,6 @@
-"""
-Main file to run on Raspberry Pi to coordinate simbox operations.
-The Pi should eventually be configured to run this program on boot,
-with the only other program running on boot being the Matlab simulation.
-"""
+# Main file to run on Raspberry Pi to coordinate simbox operations.
+# The Pi should eventually be configured to run this program on boot,
+# with the only other program running on boot being the Matlab simulation.
 
 from timeloop import Timeloop
 from datetime import datetime, timedelta
@@ -11,6 +9,7 @@ from busio import I2C   #I2C
 import board            #I2C
 #import socket           #Ethernet and Matlab
 import RPi.GPIO as GPIO #GPIO (valve feedback & LEDs)
+
 from flow_conversion import flow_to_bytes
 from add_noise import fuzz
 
@@ -79,7 +78,7 @@ def run():
     f0_data = flow_conversion(sensor_data[8], sensor_data[10])
     f1_data = flow_conversion(sensor_data[9], sensor_data[11])
     uv_data = uv_conversion(uva, uvb, uvc1, uvc2, uvd)
-    digital_data = [*f0_data, *f1_data, *uv_data, ERROR_STATE] #, 0x0a?
+    digital_data = [*f0_data, *f1_data, *uv_data, ERROR_STATE]
     
     #Prepare analog data to send to DACs
     analog_data_0 = [P[0], sensor_data[0], P[1], sensor_data[1],

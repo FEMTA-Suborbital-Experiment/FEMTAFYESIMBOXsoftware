@@ -1,3 +1,8 @@
+# Script to test the DAC chip that electronics has. Sends a cos wave to
+# channel 0 and a sin wave to channel 1. Should be pretty easily extensible
+# to test more channels and the second DAC. Wiring should be done in accorrdance
+# with our final plans for the Pi's pinout.
+
 from busio import I2C
 import board
 import time

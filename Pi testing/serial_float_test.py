@@ -1,9 +1,15 @@
+# A test, run on the Pi, that sends floats over serial.
+# We have three ways to do this:
+#     
+#   1. Convert the floats to their IEEE representations in bytes, and send those
+#   2. Send the floats as strings (i.e.) "3.14"
+#   3. Multiply by a constant to get integers, and divide back on the other end
+#     
+# This tests #2, though we may go with #3 for the final simbox. #1, while the
+# most 'correct', is kind of a pain in the ass.
+
 import serial
 import time
-
-"""NOTE: Python uses doubles for all floats (that we'll be using?)
-   Apparently the best way to pass floats/doubles over serial is to
-   convert them to strings. (Though that feels gross.)"""
 
 if __name__ == '__main__':
     s = serial.Serial('/dev/ttyACM0', baudrate=115200, timeout=1)

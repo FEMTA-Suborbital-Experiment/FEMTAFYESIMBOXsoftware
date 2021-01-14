@@ -1,7 +1,6 @@
-"""
-Proper, mathenatical way to get calibration inverses.
-Probably too slow to be worth the accuracy.
-"""
+# The proper, mathematical way to calculate the inverse of the calibrations.
+# Too slow and not worth the accuracy benefits (which are tiny). We'll use
+# a linear approximation of the calibration curves.
 
 from sympy import symbols, Eq, solveset
 from datetime import datetime

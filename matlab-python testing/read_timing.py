@@ -1,3 +1,8 @@
+# Quick test to see how quickly Python can read from a file. This would be
+# important if we had gone with the quick-and-dirty interprocess communication
+# of reading and writing to a shared file, but since we've moved to sockets, this
+# isn't important anymore.
+
 import datetime
 now = datetime.datetime.now
 
