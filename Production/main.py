@@ -28,7 +28,7 @@ IR = (0x2, 0x3) #IR flow sensor DAC channels
 
 
 #Define GPIO pins
-GPIO_PINS = 4, 14, 15, 17, 18, 27 #not set in stone
+GPIO_PINS = (4, 14, 15, 17, 18, 27) #not set in stone
 RED, GRN = 21, 13
 
 
