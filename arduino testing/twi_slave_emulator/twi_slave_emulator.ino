@@ -1,6 +1,45 @@
-/***************************************************************
- *  twi_slave_emulator
- **************************************************************/
+/****************************************************************************************************
+twi_slave_emulator
+
+Written by Ethan Kessel (mailto:eqkessel@gmail.com)
+
+This code has the purpose of emulating multiple I2C sensors using a single Arduino device. The
+header file included handles the neccesary address masking to respond to multiple addresses as a
+Two Wire Interface slave and also keeps track of whether an address was enabled intentionally or
+not.
+
+This code will be used in the testing of the FEMTA Subortbital Flight Experiment
+(https://engineering.purdue.edu/CubeSat/missions/femta) in order to validate the flight computer's
+ability to poll the I2C sensors used to monitor the experiment and it's ability to handle sensor
+failures. As noted in the header file, not all addresses may be properly removed from the mask due to
+address permutations, so certain failures are impossible to properly simulate due to the Arduino
+automatically ACKnowleding the poll.
+
+*****************************************************************************************************
+
+MIT License
+
+Copyright (c) 2020 Ethan Kessel
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*****************************************************************************************************/
 
 #include "twi_slave_emulator.h"
 #include "circular_buffer.h"
@@ -52,6 +91,7 @@ void parseByteInvBoolArray(uint8_t, bool*, size_t);
 void onDeviceRequest(address_t);
 void onDeviceReceive(size_t, address_t);
 void reportAddressCall(address_t);
+void serialPrintHexByte(uint8_t);
 
 // Main Functions
 void setup(void)
@@ -87,14 +127,6 @@ void serialRXHandler(void)
   if (Serial.available()) //  Nonzero number of bytes in buffer
   {
     serial_buffer.write(Serial.read());
-    
-//    Serial.print("  Loaded '");
-//    Serial.print(serial_buffer.peek(serial_buffer.numBuffered() - 1));
-//    Serial.print("'... there are now ");
-//    Serial.print(serial_buffer.numBuffered());
-//    Serial.println(" buffered values.");
-//    Serial.print("    Buffer has this many values ready: ");
-//    Serial.println(serial_buffer.available());
   }
 }
 
@@ -171,6 +203,7 @@ void onDeviceRequest(address_t address)
     size_t flow_sensor_index = 1;
     switch(address.address)
     {
+      // Flow Sensors
       case DEV_1:
         --flow_sensor_index;
       case DEV_2:
@@ -178,6 +211,8 @@ void onDeviceRequest(address_t address)
         Serial.println(flow_sensor_index);
         devices.write(flow_sensor_data[flow_sensor_index], LEN(flow_sensor_data[flow_sensor_index]));
         break;
+
+      // UV Sensor
       case DEV_3:
         size_t uv_data_index;
         switch(UV_command_code)
@@ -245,6 +280,7 @@ void onDeviceReceive(size_t num_bytes, address_t address)
     size_t flow_sensor_index = 1;
     switch(address.address)
     {
+      // Flow Sensors
       case DEV_1:
         --flow_sensor_index;
       case DEV_2:
@@ -252,14 +288,13 @@ void onDeviceReceive(size_t num_bytes, address_t address)
         Serial.print(flow_sensor_index);
         Serial.println(" written to");
         break;
+
+      // UV Sensor
       case DEV_3:
         UV_command_code = devices.read();
         Serial.print("UV sensor command code updated: 0x");
-        if (UV_command_code < 0x10)
-        {
-          Serial.print('0');  //  Add a leading zero if the value is a single digit in hex
-        }
-        Serial.println(UV_command_code, HEX);
+        serialPrintHexByte(UV_command_code);
+        Serial.println();
         break;
       default:
         Serial.println("Unknown device polled\a");
@@ -282,12 +317,8 @@ void onDeviceReceive(size_t num_bytes, address_t address)
     do
     {
       read_val = devices.read();
-      Serial.print(" 0x");
-      if (read_val < 0x10)
-      {
-        Serial.print('0');
-      }
-      Serial.print(read_val, HEX);
+      Serial.print(" ");
+      serialPrintHexByte(read_val);
     } while (devices.available());
   }
   Serial.println();
@@ -300,12 +331,8 @@ void onDeviceReceive(size_t num_bytes, address_t address)
 //    Prints info about a called address to the serial port
 void reportAddressCall(address_t address)
 {
-  Serial.print("ADDRESS 0x");
-  if (address.address < 0x10)
-  {
-    Serial.print('0');  //  Add a leading zero if the value is a single digit in hex
-  }
-  Serial.print(address.address, HEX);
+  Serial.print("ADDRESS ");
+  serialPrintHexByte(address.address);
   Serial.print(" (state is ");
   switch(address.state)
   {
@@ -325,4 +352,19 @@ void reportAddressCall(address_t address)
       Serial.println("unknown)");
       break;
   }
+}
+
+//  serialPrintHexByte
+//    in:
+//      uint8_t value       - single byte to print to the serial port
+//    out: none
+//    Prints a byte like 0x??, always including 2 digits
+void serialPrintHexByte(uint8_t value)
+{
+  Serial.print("0x");
+  if (value < 0x10)
+  {
+    Serial.print('0');  //  Add a leading zero if the value is a single digit in hex
+  }
+  Serial.print(value, HEX);
 }

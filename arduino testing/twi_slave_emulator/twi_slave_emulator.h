@@ -10,6 +10,22 @@ Two-Wire Interface bus utilizing the Wire.h library.
 This software is loosely based on a simpler TWI simulator written by github user alexisgaziello
 https://github.com/alexisgaziello/TwoWireSimulator
 
+Similar to what the original developer noted, this code still has the same issue that unwanted
+addresses may be responded to. This occurs because of the masking functionality used to produce the
+multi-response behavior. In the ATmega microcontroller the TWI module has a mask register that allows
+for certain bits of an incoming address to be ignored. Effectively, it is bitwise-or-ed with the
+incoming address after it was compared to the address register, setting the desired bits to 1
+regardless of their original value. This allows for multiple addresses to appear to match the desired
+one, which then causes the TWI module to respond to it. Because of how this masking system works, the
+number of addresses covered is always 2^ the number of bits set in the mask--e.g. 3 bits set in the
+mask means 8 addresses covered. The TWI module automatically ACKnowledges a recieved transmission on
+a matched address, which may be undesired if more addresses than intended are covered. While not much
+can be done about this with this high-level code, these events can be tracked by maintaining a list
+of all possible covered addresses given an inital set desired and keeping what enabled state they are
+in to be reported back to the user whenever the TWI module is activated by an incoming transmission.
+
+*****************************************************************************************************
+
 MIT License
 
 Copyright (c) 2020 Ethan Kessel
@@ -54,52 +70,56 @@ enum class addressState
 
 struct address_t    //  Data structure for containing addresses and states based on mask data
 {
-  uint8_t address;
-  addressState state;
+  uint8_t address;    //  7-bit address (extra bit unneeded but kept because 7 bits is ugly)
+  addressState state; //  Mode the address was in when it was polled
 };
 
 //  TWI Slave Emulator class declaration
 template <size_t N>
 class TWI_SlaveEmulator: public TwoWire
 {
-protected:  //  PROTECTED MEMBER VARIABLES / FUNCTIONS
-  //size_t      _num_given_addresses;     // Count of the given addresses we are wanting to emulate
+protected:  //  PROTECTED MEMBERS
+  // Member variables
   bool        _began;               // Keep track of whether the TWI has been begun or not, so we can disable only if needed
   uint8_t     _given_addresses[N];  // Array of the given addresses we are wanting to emulate
   uint8_t     _same_bits;           // All of the bits that are the same between all of the given addresses
   uint8_t     _diff_bits;           // All of the bits that are different between the given addresses
   uint8_t     _addr_byte;           // Address byte for the TWI Address Register. Changes depending on if addresses are enabled or not
   uint8_t     _addr_mask;           // Address mask byte for the TWI Address Mask Register. Also changes with enabled addresses
-  static uint8_t     _num_bits;            // Number of bits that change between addresses
-  static uint8_t     _bit_positions[7];    // Array storing the bit positions of all of the bits that change between addresses (LSB = 0)
+
+  // Static variables - these need to be static to allow for function pointers to be passed to Wire.h
+  static uint8_t    _num_bits;            // Number of bits that change between addresses
+  static uint8_t    _bit_positions[7];    // Array storing the bit positions of all of the bits that change between addresses (LSB = 0)
   static size_t     _num_addresses;       // Count of the total number of address permutations we could end up covering, i.e. 2^n
   static address_t  _addresses[128];      // Array of structures to keep track of address permuations w/ their state
-  
+
+  // Static function pointers to user's handler functions
   static void (*user_onAddressRequest)(address_t);  // Function pointer to user-defined request handler
   static void (*user_onAddressReceive)(size_t, address_t); // Function pointer to user-defined receiving handler
-  
+
+  // Static functions passed to Wire.h
   static void requestHandler(void);  //  Internal functions to hook to TwoWire system
   static void receiveHandler(int nBytes);
 
+  // Member functions
   void setRegisters(void);
   void updatePermutations(const bool* enabled_array);
   static uint8_t indexOfAddress(uint8_t address);
   
-public:   //  PUBLIC MEMBER VARIABLES / FUNCTIONS
+public:   //  PUBLIC MEMBERS
   //  CONSTRUCTOR
   TWI_SlaveEmulator(const uint8_t* addresses);
   //  DESTRUCTOR
   ~TWI_SlaveEmulator(void);
 
+  // Member functions
   void begin(void);
 
   void attachAddressRequest(void (*function)(address_t));
   void attachAddressReceive(void (*function)(size_t, address_t));
 
   void enableAddresses(const bool* enabled_array);
-  
   size_t getNumAddresses(void);
-//  uint8_t getLastByte(void);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -214,7 +234,7 @@ TWI_SlaveEmulator<N>::TWI_SlaveEmulator(const uint8_t* addresses)
     _addresses[indexOfAddress(_given_addresses[i])].state = addressState::ENABLED;
   }
 
-  //  Link the internal handler functions
+  //  Link the internal handler functions. These functions had to be static for this to work properly
   TwoWire::onRequest( requestHandler );
   TwoWire::onReceive( receiveHandler );
 }
