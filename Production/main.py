@@ -33,7 +33,7 @@ GPIO_PINS = (4, 14, 15, 17, 18, 27) #not set in stone
 RED, GRN = 21, 13
 
 
-#Define (inverse) calibrations (units (which?) -> voltage)
+# Define (inverse) calibrations (units (which?) -> voltage)
 pres_cals = (lambda x: 0.2698*x + 0.1013, lambda x: 0.2462*x + 0.4404,
              lambda x: 0.2602*x + 0.1049, lambda x: 0)
 therm_cals = (lambda x: 0, lambda x: 0,
