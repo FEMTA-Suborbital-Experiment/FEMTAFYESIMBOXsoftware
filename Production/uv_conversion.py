@@ -54,15 +54,15 @@ def uv_conversion(uva, uvb, uvc1, uvc2, uvd):
     uvc2_bin = format(uvc2, '018b')
 
     # Concatenate a binary indicSet output bytes for UV data
-    output[0] = '0b' + uva_bin[8:15]
-    output[1] = '0b' + uva_bin[0:7]
-    output[2] = '0b' + uvd_bin[8:15]
-    output[3] = '0b' + uvd_bin[0:7]
-    output[4] = '0b' + uvb_bin[8:15]
-    output[5] = '0b' + uvb_bin[0:7]
-    output[6] = '0b' + uvc1_bin[8:15]
-    output[7] = '0b' + uvc1_bin[0:7]
-    output[8] = '0b' + uvc2_bin[8:15]
-    output[9] = '0b' + uvc2_bin[0:7]
+    output[0] = '0b' + uva_bin[8:16]
+    output[1] = '0b' + uva_bin[0:8]
+    output[2] = '0b' + uvd_bin[8:16]
+    output[3] = '0b' + uvd_bin[0:8]
+    output[4] = '0b' + uvb_bin[8:16]
+    output[5] = '0b' + uvb_bin[0:8]
+    output[6] = '0b' + uvc1_bin[8:16]
+    output[7] = '0b' + uvc1_bin[0:8]
+    output[8] = '0b' + uvc2_bin[8:16]
+    output[9] = '0b' + uvc2_bin[0:8]
 
     return output
