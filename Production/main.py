@@ -11,6 +11,7 @@ import board            #I2C
 import RPi.GPIO as GPIO #GPIO (valve feedback & LEDs)
 
 from flow_conversion import flow_to_bytes
+from mass_spec import make_fake_ms
 from uv_conversion import uv_conversion, make_fake_uv
 from add_noise import fuzz
 
