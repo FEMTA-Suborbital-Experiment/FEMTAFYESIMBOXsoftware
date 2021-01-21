@@ -40,29 +40,29 @@ def uv_conversion(uva, uvb, uvc1, uvc2, uvd):
     output = [0] * 10
 
     # Scale UVA data to a 16-bit resolution
-    uva = twos_comp(uva)
-    uvd = twos_comp(uvd)
-    uvb = twos_comp(uvb)
-    uvc1 = twos_comp(uvc1)
-    uvc2 = twos_comp(uvc2)
+    uva = twos_comp(int(uva))
+    uvd = twos_comp(int(uvd))
+    uvb = twos_comp(int(uvb))
+    uvc1 = twos_comp(int(uvc1))
+    uvc2 = twos_comp(int(uvc2))
 
-    # Convert integers to binary form, to extract their LSB and MSB [0:7] and [8:15]
-    uva_bin = bin(uva)[2:]
-    uvd_bin = bin(uvd)[2:]
-    uvb_bin = bin(uvb)[2:]
-    uvc1_bin = bin(uvc1)[2:]
-    uvc2_bin = bin(uvc2)[2:]
+    # Convert to binary form, with 8 bits, and removed 0b, which will be added on the next
+    uva_bin = format(uva, '018b')
+    uvd_bin = format(uvd, '018b')
+    uvb_bin = format(uvb, '018b')
+    uvc1_bin = format(uvc1, '018b')
+    uvc2_bin = format(uvc2, '018b')
 
-    # Set output bytes for UV data
-    output[0] = uva_bin[8:15]
-    output[1] = uva_bin[0:7]
-    output[2] = uvd_bin[8:15]
-    output[3] = uvd_bin[0:7]
-    output[4] = uvb_bin[8:15]
-    output[5] = uvb_bin[0:7]
-    output[6] = uvc1_bin[8:15]
-    output[7] = uvc1_bin[0:7]
-    output[8] = uvc2_bin[8:15]
-    output[9] = uvc2_bin[0:7]
+    # Concatenate a binary indicSet output bytes for UV data
+    output[0] = '0b' + uva_bin[8:15]
+    output[1] = '0b' + uva_bin[0:7]
+    output[2] = '0b' + uvd_bin[8:15]
+    output[3] = '0b' + uvd_bin[0:7]
+    output[4] = '0b' + uvb_bin[8:15]
+    output[5] = '0b' + uvb_bin[0:7]
+    output[6] = '0b' + uvc1_bin[8:15]
+    output[7] = '0b' + uvc1_bin[0:7]
+    output[8] = '0b' + uvc2_bin[8:15]
+    output[9] = '0b' + uvc2_bin[0:7]
 
     return output
