@@ -12,6 +12,7 @@ import RPi.GPIO as GPIO #GPIO (valve feedback & LEDs)
 
 from flow_conversion import flow_to_bytes
 from uv_conversion import uv_conversion, make_fake_uv
+from common_library import sine_generator
 from add_noise import fuzz
 
 
