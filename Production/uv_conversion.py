@@ -35,7 +35,6 @@ def make_fake_uv():
 
 
 def uv_conversion(uva, uvb, uvc1, uvc2, uvd):
-    # CONSTANTS, for open-air systems with and without a teflon diffusor over the VEML6075
 
     output = [0] * 10
 
@@ -53,7 +52,7 @@ def uv_conversion(uva, uvb, uvc1, uvc2, uvd):
     uvc1_bin = format(uvc1, '018b')
     uvc2_bin = format(uvc2, '018b')
 
-    # Concatenate a binary indicSet output bytes for UV data
+    # Concatenate a binary token and set output bytes for UV data
     output[0] = '0b' + uva_bin[8:16]
     output[1] = '0b' + uva_bin[0:8]
     output[2] = '0b' + uvd_bin[8:16]
