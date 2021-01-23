@@ -33,9 +33,8 @@ uvd = sine_generator(STEP_SIZE, UVD_AMP)
 def make_fake_uv():
     return next(uva), next(uvb), next(uvc1), next(uvc2), next(uvd)
 
-
 def uv_conversion(uva, uvb, uvc1, uvc2, uvd):
-
+    
     output = [0] * 10
 
     # Scale UVA data to a 16-bit resolution
@@ -45,23 +44,11 @@ def uv_conversion(uva, uvb, uvc1, uvc2, uvd):
     uvc1 = twos_comp(int(uvc1))
     uvc2 = twos_comp(int(uvc2))
 
-    # Convert to binary form, with 8 bits, and removed 0b, which will be added on the next
-    uva_bin = format(uva, '018b')
-    uvd_bin = format(uvd, '018b')
-    uvb_bin = format(uvb, '018b')
-    uvc1_bin = format(uvc1, '018b')
-    uvc2_bin = format(uvc2, '018b')
-
-    # Concatenate a binary token and set output bytes for UV data
-    output[0] = '0b' + uva_bin[8:16]
-    output[1] = '0b' + uva_bin[0:8]
-    output[2] = '0b' + uvd_bin[8:16]
-    output[3] = '0b' + uvd_bin[0:8]
-    output[4] = '0b' + uvb_bin[8:16]
-    output[5] = '0b' + uvb_bin[0:8]
-    output[6] = '0b' + uvc1_bin[8:16]
-    output[7] = '0b' + uvc1_bin[0:8]
-    output[8] = '0b' + uvc2_bin[8:16]
-    output[9] = '0b' + uvc2_bin[0:8]
+    #Format into high and low bytes
+    output[0:2] = divmod(uva, 256)
+    output[2:4] = divmod(uvd, 256)
+    output[4:6] = divmod(uvb, 256)
+    output[6:8] = divmod(uvc1, 256)
+    output[8:10] = divmod(uvc2, 256)
 
     return output

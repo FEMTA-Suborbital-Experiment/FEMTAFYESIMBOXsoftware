@@ -35,10 +35,8 @@ def flow_to_bytes(flow_data, temp_data): #Input flow in ml/min, temp in C
     flags = 0 | (0x1 if air else 0x0) | (0x2 if high_flow else 0x0)
     
     #Set output bytes
-    output[0] = flow_data // 256
-    output[1] = flow_data % 256
-    output[3] = temp_data // 256
-    output[4] = temp_data % 256
+    output[0:1] = divmod(flow_data, 256)
+    output[3:5] = divmod(temp_data, 256)
     output[7] = flags
     
     #Calculate crcs
