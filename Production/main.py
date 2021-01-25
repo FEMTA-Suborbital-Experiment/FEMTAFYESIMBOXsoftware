@@ -1,14 +1,15 @@
 # Main file to run on Raspberry Pi to coordinate simbox operations.
 # The Pi should eventually be configured to run this program on boot.
 
-from timeloop import Timeloop
 from datetime import datetime, timedelta
+from timeloop import Timeloop
 import serial           #USB
 from busio import I2C   #I2C
 import board            #I2C
-#import socket           #Ethernet
 import RPi.GPIO as GPIO #GPIO (valve feedback & LEDs)
+#import socket           #Ethernet
 
+from virtual_env import simulation
 from flow_conversion import flow_to_bytes
 from mass_spec import make_fake_ms
 from uv_conversion import uv_conversion, make_fake_uv
@@ -41,7 +42,6 @@ therm_cals = (lambda x: 0, lambda x: 0,
 
 
 #Set up connections (and misc.)
-start_t = 0
 tl = Timeloop()
 i2c = board.I2C()
 arduino = serial.Serial('/dev/ttyACM0', baudrate=115200, timeout=1)
@@ -51,6 +51,9 @@ GPIO.setup(GRN, GPIO.OUT)
 for pin in GPIO_PINS:
     GPIO.setup(pin, GPIO.IN)
 
+start_t = 0
+valve_states = [True, True, True, True, True, True] #Edit to appropriate starting states
+
 
 @tl.job(interval=timedelta(seconds=1/FREQUENCY))
 def run():
@@ -59,8 +62,8 @@ def run():
         GPIO.output(GRN, GPIO.HIGH)
         start_t = datetime.datetime.now()
     
-    #Receive sensor data from Matlab
-    sensor_data = list(matlab.read())
+    #Receive sensor data from Matlab, after sending valve states
+    sensor_data = simulation(valve_states)
     #pres0, pres1, pres2, pres3, therm0, therm1, therm2, therm3,
     #dig_flow0, dig_flow1, dig_temp0, dig_temp1, ir_flow0, ir_flow1
     
@@ -95,8 +98,7 @@ def run():
     arduino.write(bytes(digital_data))
     
     #Valve feedback
-    valves = [GPIO.input(pin) for pin in GPIO_PINS]
-    matlab.write(valves)
+    valve_states = [GPIO.input(pin) for pin in GPIO_PINS]
     
     
 if __name__=='__main__':
