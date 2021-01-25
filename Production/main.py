@@ -1,13 +1,12 @@
 # Main file to run on Raspberry Pi to coordinate simbox operations.
-# The Pi should eventually be configured to run this program on boot,
-# with the only other program running on boot being the Matlab simulation.
+# The Pi should eventually be configured to run this program on boot.
 
 from timeloop import Timeloop
 from datetime import datetime, timedelta
 import serial           #USB
 from busio import I2C   #I2C
 import board            #I2C
-#import socket           #Ethernet and Matlab
+#import socket           #Ethernet
 import RPi.GPIO as GPIO #GPIO (valve feedback & LEDs)
 
 from flow_conversion import flow_to_bytes
