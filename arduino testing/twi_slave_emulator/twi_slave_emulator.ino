@@ -98,7 +98,7 @@ void setup(void)
 {
   //  Start serial communication protocol
   Serial.begin(BAUDRATE);
-  Serial.println("[!] Connected to serial port...");
+  Serial.println("[!] Arduino TWI Emulator connected to serial port...");
   Serial.println(serial_buffer.eomSignal());
 
   devices.attachAddressRequest(onDeviceRequest);
@@ -260,6 +260,7 @@ void onDeviceRequest(address_t address)
   {
     Serial.println("Bad address state, ignoring...");
   }
+  Serial.println();
 }
 
 //  onDeviceReceive
@@ -292,7 +293,7 @@ void onDeviceReceive(size_t num_bytes, address_t address)
       // UV Sensor
       case DEV_3:
         UV_command_code = devices.read();
-        Serial.print("UV sensor command code updated: 0x");
+        Serial.print("UV sensor command code updated: ");
         serialPrintHexByte(UV_command_code);
         Serial.println();
         break;
