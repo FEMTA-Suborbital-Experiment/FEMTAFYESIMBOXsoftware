@@ -265,11 +265,21 @@ void TWI_SlaveEmulator<N>::requestHandler(void)
   
   if(user_onAddressRequest) // Only handle if function is given
   {
+    Serial.print(">>DEBUG>> TWDR is ");
+    Serial.print(TWDR, BIN);
     uint8_t last_addr = TWDR >> 1;  //  Get the address that was called (sitting in the data register)
+    Serial.print(" last_addr is ");
+    Serial.print(last_addr, BIN);
+    Serial.print(" 0x");
+    Serial.print(last_addr, HEX);
+    Serial.print(" TWDR is ");
+    Serial.print(TWDR, BIN);
     uint8_t index = indexOfAddress(last_addr);
     if (index < _num_addresses)
     {
       address = _addresses[index];
+      Serial.print(" determined to be address 0x");
+      Serial.println(address.address, HEX);
     }
 
     user_onAddressRequest(address); //  Call the user's function
@@ -288,11 +298,21 @@ void TWI_SlaveEmulator<N>::receiveHandler(int nBytes)
   
   if(user_onAddressRequest) // Only handle if function is given
   {
+    Serial.print(">>DEBUG>> TWDR is ");
+    Serial.print(TWDR, BIN);
     uint8_t last_addr = TWDR >> 1;  //  Get the address that was called (sitting in the data register)
+    Serial.print(" last_addr is ");
+    Serial.print(last_addr, BIN);
+    Serial.print(" 0x");
+    Serial.print(last_addr, HEX);
+    Serial.print(" TWDR is ");
+    Serial.print(TWDR, BIN);
     uint8_t index = indexOfAddress(last_addr);
     if (index < _num_addresses)
     {
       address = _addresses[index];
+      Serial.print(" determined to be address 0x");
+      Serial.println(address.address, HEX);
     }
 
     user_onAddressReceive(static_cast<size_t>(nBytes), address); //  Call the user's function

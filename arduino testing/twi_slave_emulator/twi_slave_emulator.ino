@@ -166,9 +166,9 @@ void commandHandler(void)
     {
       uv_sensor_data[i] = serial_buffer.read();
     }
+    
+    Serial.println(" processed!");
   }
-
-  Serial.println(" processed!");
 }
 
 //  parseByteInvBoolArray
@@ -320,8 +320,8 @@ void onDeviceReceive(size_t num_bytes, address_t address)
       Serial.print(" ");
       serialPrintHexByte(read_val);
     } while (devices.available());
+    Serial.println();
   }
-  Serial.println();
 }
 
 //  reportAddressCall
