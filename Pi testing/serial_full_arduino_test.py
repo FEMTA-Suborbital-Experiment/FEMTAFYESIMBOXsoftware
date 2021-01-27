@@ -1,6 +1,8 @@
+# Test run on the Pi. Sends out three bytes at a time, over
+# serial, every half second.
+
 import serial
 import time
-
 
 if __name__ == '__main__':
     s = serial.Serial('/dev/ttyACM0', baudrate=115200, timeout=1)

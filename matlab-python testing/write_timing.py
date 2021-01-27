@@ -1,3 +1,6 @@
+# Test to see how quickly Python can write data to a file.
+# This info is no longer needed (see header in read_timing.py)
+
 import datetime
 now = datetime.datetime.now
 from random import random
