@@ -2,10 +2,11 @@ import subprocess
 
 host = "FEMTAsimboxPi.local"
 user = "pi"
-password = "FEMTAsoftwareFYEraspberryPI2020."
-command = "\"echo 'Hello World!'\""
+#password = "FEMTAsoftwareFYEraspberryPI2020."
+command = "cd Project_Files; ls"
 
-arg = f"echo {password} | ssh {user}@{host} {command}" #echo {password} | ssh {user}@{host} {command}
-print(arg)
+args = f"ssh {user}@{host} '{command}'".split()
 
-stdout, stderr = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+sp = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+print(f"stdout: {sp.stdout.decode()} \n\nstderr: {sp.stderr.decode()}")
