@@ -259,6 +259,8 @@ TWI_SlaveEmulator<N>::~TWI_SlaveEmulator(void)
 template <size_t N>
 void TWI_SlaveEmulator<N>::requestHandler(void)
 {
+  uint8_t data_register = TWDR; // Immediately capture address targeted in data register
+  
   address_t address;  // Default argument to user handler is a bad address
   address.address = 0xFF;
   address.state = addressState::ERR;
@@ -274,6 +276,16 @@ void TWI_SlaveEmulator<N>::requestHandler(void)
     Serial.print(last_addr, HEX);
     Serial.print(" TWDR is ");
     Serial.print(TWDR, BIN);
+
+    last_addr = data_register >> 1; // Isolate 7-bit address from r/w bit
+    Serial.print(" -- last_addr is ");
+    Serial.print(last_addr, BIN);
+    Serial.print(" 0x");
+    Serial.print(last_addr, HEX);
+    Serial.print(" TWDR was ");
+    Serial.print(data_register, BIN);
+    Serial.print(" 0x");
+    Serial.print(data_register, HEX);
     uint8_t index = indexOfAddress(last_addr);
     if (index < _num_addresses)
     {
@@ -292,6 +304,8 @@ void TWI_SlaveEmulator<N>::requestHandler(void)
 template <size_t N>
 void TWI_SlaveEmulator<N>::receiveHandler(int nBytes)
 {
+  uint8_t data_register = TWDR; // Immediately capture address targeted in data register
+  
   address_t address;  // Default argument to user handler is a bad address
   address.address = 0xFF;
   address.state = addressState::ERR;
@@ -307,6 +321,16 @@ void TWI_SlaveEmulator<N>::receiveHandler(int nBytes)
     Serial.print(last_addr, HEX);
     Serial.print(" TWDR is ");
     Serial.print(TWDR, BIN);
+
+    last_addr = data_register >> 1; // Isolate 7-bit address from r/w bit
+    Serial.print(" -- last_addr is ");
+    Serial.print(last_addr, BIN);
+    Serial.print(" 0x");
+    Serial.print(last_addr, HEX);
+    Serial.print(" TWDR was ");
+    Serial.print(data_register, BIN);
+    Serial.print(" 0x");
+    Serial.print(data_register, HEX);
     uint8_t index = indexOfAddress(last_addr);
     if (index < _num_addresses)
     {
