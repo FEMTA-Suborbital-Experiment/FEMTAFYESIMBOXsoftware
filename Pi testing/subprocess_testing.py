@@ -17,7 +17,7 @@ def comms_test():
     print(arg1)
     sp1 = subprocess.Popen(arg1,  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     time.sleep(3)
-    arg2 = f"ssh {user}@{host} \"cd \\\"Project_Files/Pi testing\\\"; echo \\\"1\\\" > state\""
+    arg2 = f"ssh {user}@{host} \"cd \\\"Project_Files/Pi testing\\\"; echo \\\"1\\\" > state\"" #https://xkcd.com/1638/
     print(arg2)
     sp2 = subprocess.run(arg2, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5)
     sp1.wait(10)
