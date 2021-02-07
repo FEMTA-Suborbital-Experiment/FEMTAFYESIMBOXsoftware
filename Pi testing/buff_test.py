@@ -1,3 +1,5 @@
+# This functionality is not needed; see mp_shared_mem.py
+
 # Test for a simple inter-process buffer that might be used to communicate between 
 # the virtual environment sim and the main simbox program. Uses a lock to ensure
 # reading and writing don't conflict. The test below creates two process that 
