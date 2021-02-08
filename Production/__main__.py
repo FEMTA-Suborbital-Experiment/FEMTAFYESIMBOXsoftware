@@ -11,7 +11,6 @@ import board
 import RPi.GPIO as GPIO
 from timeloop import Timeloop
 
-from virtual_env import simulation
 from flow_conversion import flow_to_bytes
 from mass_spec import make_fake_ms
 from uv_conversion import uv_conversion, make_fake_uv
