@@ -1,8 +1,9 @@
 # Main file to run on Raspberry Pi to coordinate simbox operations.
 
-#import sys
 from datetime import datetime, timedelta
+now = datetime.now
 import multiprocessing.shared_memory as sm
+import json
 #import socket
 
 import numpy as np
@@ -17,9 +18,10 @@ from uv_conversion import uv_conversion, make_fake_uv
 from add_noise import fuzz
 
 
-FREQUENCY = 20 #Hz
-ERROR_STATE = 0 #Default is to keep this constant
-
+# Get config settings
+with open("configs.json", "r") as conf:
+    configs = json.load(conf)
+#do whatever processing here (like for altitude and error state, etc.)
 
 # Define addresses
 DAC = (0x28, 0x29) #DAC I2C addresses
@@ -36,7 +38,7 @@ GPIO_PINS = (4, 14, 15, 17, 18, 27) #not set in stone
 RED, GRN = 21, 13
 
 
-# Define (inverse) calibrations (units (which?) -> voltage)
+# Define (inverse) calibrations (units -> voltage)
 pres_cals = (lambda x: 0.2698*x + 0.1013, lambda x: 0.2462*x + 0.4404,
              lambda x: 0.2602*x + 0.1049, lambda x: 0)
 therm_cals = (lambda x: 0, lambda x: 0,
@@ -62,16 +64,18 @@ for pin in GPIO_PINS:
 
 start_t = 0
 tl = Timeloop()
+error_state = configs["init_error"]
 
 
 #Main looping function
-@tl.job(interval=timedelta(seconds=1/FREQUENCY))
+@tl.job(interval=timedelta(seconds=1/(configs["frequency"])))
 def run():
-    global sensor_data, valve_states, start_t
+    global sensor_data, valve_states, error_state, start_t
+    
     # Set start time
     if not start_t:
         GPIO.output(GRN, GPIO.HIGH)
-        start_t = datetime.datetime.now()
+        start_t = now()
     
     # Sensor data: (15 floats)
     # pres0, pres1, pres2, pres3, therm0, therm1, therm2, therm3, therm4,
@@ -93,7 +97,8 @@ def run():
     f0_data = flow_to_bytes(sensors[8], sensors[10])
     f1_data = flow_to_bytes(sensors[9], sensors[11])
     uv_data = uv_conversion(uva, uvb, uvc1, uvc2, uvd)
-    digital_data = [*f0_data, *f1_data, *uv_data, ERROR_STATE]
+    error_state = configs["error_state"](now() - start_t)
+    digital_data = [*f0_data, *f1_data, *uv_data, error_state]
     
     #Prepare analog data to send to DACs
     analog_data_0 = [P[0], sensors[0], P[1], sensors[1],
