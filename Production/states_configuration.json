@@ -21,28 +21,32 @@
 			"time": 60,
 			"fail_type": "toggle",
 			"repeat": 1,
-			"repeat interval": 15
+			"repeat_number": 1,
+			"repeat_interval": 15
 		},
 		"pressure": {
 			"channels": [0x0, 0x1, 0x2, 0x3],
 			"time": 60,
 			"fail_type": "toggle",
 			"repeat": 0,
-			"repeat interval": 30
+			"repeat_number": 1,
+			"repeat_interval": 30
 		},
 		"mass spec": {
 			"channels": [0x0, 0x1],
 			"time": 60,
 			"fail_type": "toggle",
 			"repeat": 0,
-			"repeat interval": 45,
+			"repeat_number": 1,
+			"repeat_interval": 45,
 		},
 		"infrared flow": {
 			"channels": [0x2, 0x3],
 			"time": 60,
 			"fail_type": "toggle",
 			"repeat": 0,
-			"repeat interval": 60
+			"repeat_number": 1,
+			"repeat_interval": 60
 		}
 	}
 }
