@@ -28,9 +28,9 @@ DAC = (0x28, 0x29) #DAC I2C addresses
 # DAC0: pressure sensors & thermistors 1-4
 # DAC1: mass spec, IR flow & thermistor 5
 P = (0x0, 0x1, 0x2, 0x3) #Pressure sensor DAC channels
-T = (0x4, 0x5, 0x6, 0x7, 0x4) #Thermistor DAC channels
-MS = (0x0, 0x1) #Mass spec DAC channels
-IR = (0x2, 0x3) #IR flow sensor DAC channels
+T = (0x4, 0x5, 0x6, 0x7, 0x0) #Thermistor DAC channels
+MS = (0x4, 0x5) #Mass spec DAC channels
+IR = (0x6, 0x7) #IR flow sensor DAC channels
 
 
 # Define GPIO pins
