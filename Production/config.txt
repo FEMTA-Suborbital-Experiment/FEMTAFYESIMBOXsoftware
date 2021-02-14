@@ -1,0 +1,45 @@
+:: Simbox Frequency ::
+
+100 Hz
+
+
+
+:: Event Timing
+Each flight event (not configurable) has a time, in seconds, past launch.
+::
+
+Launch;         0
+Start of 0g;  150
+Apogee;       300
+End of 0g;    500
+Landing;      650
+
+
+
+:: Sensor Failures
+Each line should indicate a failure instance
+of the form <name>; <state>; <time>;.
+
+<name> is one of the following names (case-insensitive), or alternatively the number corresponding to it:
+
+"Flow0", "Flow1", "UV", "Pres0", "Pres1", "Pres2", "Pres3", "Therm0"
+   0        1      2       3        4        5        6        7
+
+"Therm1", "Therm2", "Therm3", "Therm4", "Mass0", "Mass1", "IR0", "IR1"
+   8         9         10        11       12       13      14     15
+
+<state> is one of "Normal", "Dead", "Min", or "Max" (case-insensitive)
+(alternatively,   "0",      "1",    "2",      "3")
+Only digital sensors (Flow0, Flow1, UV) can be Dead
+
+<time> is time in seconds after experiment start (beginning of 0g)
+
+Two valid examples:
+Pres3; Min; 45
+1; 1; 75;
+::
+
+Mass0; Max; 30;
+4; 2; 60
+UV; 1; 75
+
