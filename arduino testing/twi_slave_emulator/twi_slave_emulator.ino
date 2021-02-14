@@ -19,7 +19,7 @@ automatically ACKnowleding the poll.
 
 MIT License
 
-Copyright (c) 2020 Ethan Kessel
+Copyright (c) 2021 Ethan Kessel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -70,7 +70,7 @@ TWI_SlaveEmulator<NUM_DEV> devices(addr_list);          // TWI Slave Emulator us
 bool device_states[NUM_DEV] = {true, true, true};       //  Enable states of the devices
 
 uint8_t flow_sensor_data[2][9] = {0};   //  Data arrays for the output of the two flow sensors
-//  See pp. 10-11: https://developer.sensirion.com/fileadmin/user_upload/customers/sensirion/Dokumente/4_Liquid_Flow_Meters/Liquid_Flow/Sensirion_Liquid_Flow_Sensor_SLF3S-1300F_Datasheet_EN_D1.pdf
+//  See pp. 10-11: https://www.sensirion.com/fileadmin/user_upload/customers/sensirion/Dokumente/4_Liquid_Flow_Meters/Liquid_Flow/Sensirion_Liquid_Flow_Meters_SLF3S-1300F_Datasheet_EN_D1.pdf
 uint8_t uv_sensor_data[8] = {0};        //  Data array for values returnable by UV sensor
 //  See pp. 6-8: https://cdn.sparkfun.com/assets/3/c/3/2/f/veml6075.pdf
 
@@ -98,7 +98,7 @@ void setup(void)
 {
   //  Start serial communication protocol
   Serial.begin(BAUDRATE);
-  Serial.println("[!] Arduino TWI Emulator connected to serial port...");
+  Serial.println("Arduino TWI Emulator connected to serial port...");
   Serial.println(serial_buffer.eomSignal());
 
   devices.attachAddressRequest(onDeviceRequest);
@@ -142,10 +142,12 @@ void commandHandler(void)
     size_t j;
     
     //  Echo command back
-    Serial.print("CMD RX: ");
+    Serial.print("Serial recieved:");
     for (i = 0; i < serial_buffer.available(); ++i)
     {
-      Serial.print(serial_buffer.peek(i));
+      // Serial.print(serial_buffer.peek(i));
+      Serial.print(' ');
+      serialPrintHexByte(serial_buffer.peek(i));
     }
 
     //  Parse the first byte into device enabled states
@@ -167,7 +169,7 @@ void commandHandler(void)
       uv_sensor_data[i] = serial_buffer.read();
     }
     
-    Serial.println(" processed!");
+    Serial.println(" processed");
   }
 }
 
@@ -248,17 +250,17 @@ void onDeviceRequest(address_t address)
         }
         break;
       default:
-        Serial.println("Unknown device polled\a");
+        Serial.println("Unknown device polled");
         break;
     }
   }
   else if (address.state == addressState::SHADOW)
   {
-    Serial.println("Address is in shadow, ignoring...");
+    Serial.println("Address is in shadow, ignoring");
   }
   else
   {
-    Serial.println("Bad address state, ignoring...");
+    Serial.println("Bad address state, ignoring");
   }
   Serial.println();
 }
@@ -298,17 +300,17 @@ void onDeviceReceive(size_t num_bytes, address_t address)
         Serial.println();
         break;
       default:
-        Serial.println("Unknown device polled\a");
+        Serial.println("Unknown device polled");
         break;
     }
   }
   else if (address.state == addressState::SHADOW)
   {
-    Serial.println("Address is in shadow, ignoring...");
+    Serial.println("Address is in shadow, ignoring");
   }
   else
   {
-    Serial.println("Bad address state, ignoring...");
+    Serial.println("Bad address state, ignoring");
   }
 
   if (devices.available())
