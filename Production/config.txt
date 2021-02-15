@@ -28,7 +28,7 @@ of the form <name>; <state>; <time>;.
 "Therm1", "Therm2", "Therm3", "Therm4", "Mass0", "Mass1", "IR0", "IR1"
    8         9         10        11       12       13      14     15
 
-<state> is one of "Normal", "Dead", "Min", or "Max" (case-insensitive)
+<state> is one of "Normal", "Min", "Max", or "Dead" (case-insensitive)
 (alternatively,   "0",      "1",    "2",      "3")
 Only digital sensors (Flow0, Flow1, UV) can be Dead
 
@@ -36,10 +36,9 @@ Only digital sensors (Flow0, Flow1, UV) can be Dead
 
 Two valid examples:
 Pres3; Min; 45
-1; 1; 75;
+1; 3; 75;
 ::
 
 Mass0; Max; 30;
-4; 2; 60
-UV; 1; 75
-
+4; 1; 60
+UV; 3; 75
