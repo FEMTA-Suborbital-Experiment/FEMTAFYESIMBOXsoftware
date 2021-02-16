@@ -34,8 +34,6 @@ def get_flight_condition(time, times):
 
     time_passed = (now() - time).total_seconds()
 
-    print(time_passed)
-
     if time_passed >= times[3]:
         flight_condition = 3
     elif time_passed >= times[1]:
