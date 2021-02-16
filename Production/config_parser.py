@@ -17,7 +17,7 @@ configs = dict() #To be filled and outputted
 
 # -=-=- Parse simbox frequency -=-=-
 try:
-    configs["freq"] = int(src[0].strip().split()[0])
+    configs["freqency"] = int(src[0].strip().split()[0])
 except TypeError:
     raise ConfigurationError("'Simbox Frequency' is missing or formatted incorrectly")
 
@@ -42,7 +42,7 @@ if times[0] != 0:
 elif len(times) != len(events):
     raise ConfigurationError("Flight event list has been modified")
 
-exp_duration = times[3] - times[1]
+flight_duration = times[4] - times[0]
 configs["event_times"] = tuple(times)
 
 
@@ -84,16 +84,16 @@ for i in range(len(failures)):
     except ValueError:
         raise ConfigurationError(f"Invalid time for sensor failure #{i + 1}")
     
-    if 0 > failures[i][2]:
-        raise ConfigurationError(f"Invalid time for sensor failure #{i + 1} (before experiment start)")
-    if failures[i][2] > exp_duration:
-        raise ConfigurationError(f"Invalid time for sensor failure #{i + 1} (after experiment end)")
+    if failures[i][2] < 0:
+        raise ConfigurationError(f"Invalid time for sensor failure #{i + 1} (before liftoff)")
+    if failures[i][2] > flight_duration:
+        raise ConfigurationError(f"Invalid time for sensor failure #{i + 1} (after landing)")
 
 failures.sort(key=lambda x: x[2])
 
 # Next, convert digital sensor 'dead' failures to error states
 dead_failures = [failure for failure in failures if (failure[0] < 3) and (failure[1] in (0, 3))]
-error_states = [[0, exp_duration, 0]] #-> start_t, end_t, event state
+error_states = [[0, flight_duration, 0]] #-> start_t, end_t, event state
 for fail in dead_failures:
     sensor = 2 ** fail[0]
     state = bool(fail[1]) # i.e 1 if Dead, 0 if Normal
@@ -101,7 +101,7 @@ for fail in dead_failures:
 
     indx = -1
     for i in range(len(error_states)):
-        if (error_states[i][0] < time) and (error_states[i][1] == exp_duration or error_states[i+1][0] > time):
+        if (error_states[i][0] < time) and (error_states[i][1] == flight_duration or error_states[i+1][0] > time):
             # insert a new tuple starting at transition time and taking the previous tuple's end time
             error_states.insert(i + 1, [time, error_states[i][1], error_states[i][2]])
             # set previous tuple's end time to transition time
@@ -127,7 +127,7 @@ configs["dig_error_states"] = error_states
 # 0, 1, or 2 (being Normal, Min, and Max)
 
 all_failures = [f for f in failures if f[1] != 3]
-error_states = [[0, exp_duration, [0]*15]] #-> start_t, end_t, state
+error_states = [[0, flight_duration, [0]*15]] #-> start_t, end_t, state
 
 for fail in all_failures:
     sensor = fail[0]
@@ -136,7 +136,7 @@ for fail in all_failures:
 
     indx = -1
     for i in range(len(error_states)):
-        if (error_states[i][0] < time) and (error_states[i][1] == exp_duration or error_states[i+1][0] > time):
+        if (error_states[i][0] < time) and (error_states[i][1] == flight_duration or error_states[i+1][0] > time):
             # insert a new tuple starting at transition time and taking the previous tuple's end time
             error_states.insert(i + 1, [time, error_states[i][1], error_states[i][2].copy()])
             # set previous tuple's end time to transition time
