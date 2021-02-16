@@ -2,8 +2,8 @@
 
 from datetime import datetime, timedelta
 now = datetime.now
+import multiprocessing as mp
 import multiprocessing.shared_memory as sm
-import json
 #import socket
 
 import numpy as np
@@ -12,17 +12,13 @@ import board
 import RPi.GPIO as GPIO
 from timeloop import Timeloop
 
+from config_parser import configs
 from flow_conversion import flow_to_bytes
 from mass_spec import make_fake_ms
 from uv_conversion import uv_conversion, make_fake_uv
 from add_noise import fuzz
 from condition_functions import poll_valve_states, get_flight_conditions
 
-
-# Get config settings
-with open("configs.json", "r") as conf:
-    configs = json.load(conf)
-#do whatever processing here (like for altitude and error state, etc.)
 
 # Define addresses
 DAC = (0x28, 0x29) #DAC I2C addresses
@@ -65,8 +61,13 @@ for pin in GPIO_PINS:
 
 start_t = 0
 tl = Timeloop()
+<<<<<<< Updated upstream
 error_state = configs["init_error"]
 times = configs["event_times"]
+=======
+error_state = 0 #Making I2C sensors stop responding
+sensor_failures = [0] * 15 #All sensors, normal/min/max (see config.txt for indices)
+>>>>>>> Stashed changes
 
 
 #Main looping function
@@ -78,19 +79,35 @@ def run():
     if not start_t:
         GPIO.output(GRN, GPIO.HIGH)
         start_t = now()
+
+    # Determine new sensor failures
+    for period in configs["dig_error_states"]:
+        if period[0] <= now() - start_t < period[1]:
+            error_state = period[2]
+
+    for period in configs["all_error_states"]:
+        if period[0] <= now() - start_t < period[1]:
+            error_state = period[2]
     
-    # Sensor data: (15 floats)
+    # Incoming sensor data: (15 floats)
     # pres0, pres1, pres2, pres3, therm0, therm1, therm2, therm3, therm4,
     # dig_flow0, dig_flow1, dig_temp0, dig_temp1, ir_flow0, ir_flow1
     
-    # Process data (only read from 'sensor_data'; mutate 'sensors')
-    sensors = [fuzz(d) for d in sensor_data]
-    for i in range(4):
-        sensors[i] = pres_cals[i](sensors[i])
-    for i in range(5):
-        sensors[i + 4] = therm_cals[i](sensors[i + 4])
+    # Process data (only read from 'sensor_data' (<- shared array); mutate 'sensors')
+    sensors = [fuzz(d) for d in sensor_data[:13]] + list(sensor_data[13:]) #boolean IR doesn't need noise
+    for i in range(9):
+        if sensor_failures[i] == 1: #min
+            sensors[i] = 0
+        elif sensor_failures[i] == 2: #max
+            sensors[i] = 255 #TODO: what is the max value in this context? 1? 255?
+        else: #normal operation
+            if i < 4: #pressure sensors
+                sensors[i] = pres_cals[i](sensors[i])
+            else: #thermistors
+                sensors[i] = therm_cals[i - 4](sensors[i])
+
         
-    # Make fake UV and mass spec. data
+    # Make fake UV and mass spec. data #TODO: implement normal/min/max for uv & mass spec
     uva, uvb, uvc1, uvc2, uvd = make_fake_uv()
     mass0, mass1 = make_fake_ms()
     
