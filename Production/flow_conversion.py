@@ -1,7 +1,8 @@
 # Functions to take the flow and temerature data from the I2C flow sensors
 # and process it into the series of bytes that the flight computer expects.
 
-def crc(message):
+def crc(byte1, byte0):
+    message = 256 * byte1 + byte0
     poly, val = 0x31, 0xff
     for b in message:
         val ^= b
