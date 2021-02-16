@@ -16,6 +16,7 @@ from flow_conversion import flow_to_bytes
 from mass_spec import make_fake_ms
 from uv_conversion import uv_conversion, make_fake_uv
 from add_noise import fuzz
+from condition_functions import poll_valve_states, get_flight_conditions
 
 
 # Get config settings
@@ -65,6 +66,7 @@ for pin in GPIO_PINS:
 start_t = 0
 tl = Timeloop()
 error_state = configs["init_error"]
+times = configs["event_times"]
 
 
 #Main looping function
@@ -116,6 +118,10 @@ def run():
     
     #Valve feedback
     valve_states[:] = [GPIO.input(pin) for pin in GPIO_PINS]
+
+    # Set Conditions
+    sim_cond = poll_valve_states(valve_states)
+    flight_cond = get_flight_conditions(start_t, times)
     
     
 if __name__ == "__main__":
