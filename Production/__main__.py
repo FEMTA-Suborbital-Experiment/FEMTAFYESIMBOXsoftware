@@ -61,13 +61,9 @@ for pin in GPIO_PINS:
 
 start_t = 0
 tl = Timeloop()
-<<<<<<< Updated upstream
-error_state = configs["init_error"]
 times = configs["event_times"]
-=======
 error_state = 0 #Making I2C sensors stop responding
 sensor_failures = [0] * 15 #All sensors, normal/min/max (see config.txt for indices)
->>>>>>> Stashed changes
 
 
 #Main looping function
