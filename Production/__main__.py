@@ -63,7 +63,9 @@ start_t = 0
 tl = Timeloop()
 times = configs["event_times"]
 error_state = 0 #Making I2C sensors stop responding
-sensor_failures = [0] * 15 #All sensors, normal/min/max (see config.txt for indices)
+sensor_failures = [0] * 16 #All sensors, normal/min/max. Indices:
+# Flow0, Flow1, UV, Pres0, Pres1, Pres2, Pres3, Therm0, 
+# Therm1, Therm2, Therm3, Therm4, Mass0, Mass1, IR0, IR1
 
 
 #Main looping function
@@ -92,9 +94,10 @@ def run():
     # Process data (only read from 'sensor_data' (<- shared array); mutate 'sensors')
     sensors = [fuzz(d) for d in sensor_data[:13]] + list(sensor_data[13:]) #boolean IR doesn't need noise
     for i in range(9):
-        if sensor_failures[i] == 1: #min
+        #i + 3 below makes the two different sets of indices line up (15 data values, 16 sensors, in diffrent orders)
+        if sensor_failures[i + 3] == 1: #min
             sensors[i] = 0
-        elif sensor_failures[i] == 2: #max
+        elif sensor_failures[i + 3] == 2: #max
             sensors[i] = 255 #TODO: what is the max value in this context? 1? 255?
         else: #normal operation
             if i < 4: #pressure sensors
@@ -103,16 +106,22 @@ def run():
                 sensors[i] = therm_cals[i - 4](sensors[i])
 
         
-    # Make fake UV and mass spec. data #TODO: implement normal/min/max for uv & mass spec
-    uva, uvb, uvc1, uvc2, uvd = make_fake_uv()
-    mass0, mass1 = make_fake_ms()
+    # Make fake UV and mass spec. data 
+    uva, uvb, uvc1, uvc2, uvd = make_fake_uv(sensor_failures[2])
+    mass0, mass1 = make_fake_ms(sensor_failures[12], sensor_failures[13])
+
+    # Process IR error states
+    for i in (13, 14):
+        if sensor_failures[i + 1] == 1: #min
+            sensors[i] = 0
+        elif sensor_failures[i + 1] == 2: #max
+            sensors[i] = 1
     
     #Prepare digital data to send to Arduino
     #9 bytes for each flow, 10 for UV, 1 for error state
-    f0_data = flow_to_bytes(sensors[8], sensors[10])
-    f1_data = flow_to_bytes(sensors[9], sensors[11])
+    f0_data = flow_to_bytes(sensors[8], sensors[10], sensor_failures[0])
+    f1_data = flow_to_bytes(sensors[9], sensors[11], sensor_failures[1])
     uv_data = uv_conversion(uva, uvb, uvc1, uvc2, uvd)
-    error_state = configs["error_state"](now() - start_t)
     digital_data = [*f0_data, *f1_data, *uv_data, error_state]
     
     #Prepare analog data to send to DACs

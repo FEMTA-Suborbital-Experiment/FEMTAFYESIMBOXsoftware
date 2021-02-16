@@ -123,11 +123,11 @@ configs["dig_error_states"] = error_states
 
 # Next, parse normal/min/max for all sensors 
 # outputted: list of (start_t, end_t, <state>) like above but <state> is a 
-# 15-list with each spot corresponding to a sensor and equal to either 
+# 16-list with each spot corresponding to a sensor and equal to either 
 # 0, 1, or 2 (being Normal, Min, and Max)
 
 all_failures = [f for f in failures if f[1] != 3]
-error_states = [[0, flight_duration, [0]*15]] #-> start_t, end_t, state
+error_states = [[0, flight_duration, [0]*16]] #-> start_t, end_t, state
 
 for fail in all_failures:
     sensor = fail[0]

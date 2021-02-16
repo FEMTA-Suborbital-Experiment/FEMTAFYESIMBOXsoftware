@@ -16,13 +16,19 @@ def crc(byte1, byte0):
 def twos_comp(num):
     return num if num >= 0 else 65536 + num
 
-def flow_to_bytes(flow_data, temp_data): #Input flow in ml/min, temp in C
+def flow_to_bytes(flow_data, temp_data, state): #Input flow in ml/min, temp in C
+    #Handle errors
+    if state == 1: #min
+        return [0] * 9
+    elif state == 2: #max
+        return [255] * 9
+    
     #Initialize output bytes
     output = [0] * 9
     
     #Prepare flags
     air = 0
-    if abs(flow) > 65:
+    if abs(flow_data) > 65:
         high_flow = 1
         flow_data = 0
     else:

@@ -30,8 +30,13 @@ uvc2 = sine_generator(STEP_SIZE, UVC2_AMP)
 uvd = sine_generator(STEP_SIZE, UVD_AMP)
 
 
-def make_fake_uv():
-    return next(uva), next(uvb), next(uvc1), next(uvc2), next(uvd)
+def make_fake_uv(state):
+    if state == 0: #normal
+        return next(uva), next(uvb), next(uvc1), next(uvc2), next(uvd)
+    elif state == 1: #min
+        return (0, 0, 0, 0, 0)
+    elif state == 2: #max
+        return (UVA_AMP, UVB_AMP, UVC1_AMP, UVC2_AMP, UVD_AMP)
 
 def uv_conversion(uva, uvb, uvc1, uvc2, uvd):
     
