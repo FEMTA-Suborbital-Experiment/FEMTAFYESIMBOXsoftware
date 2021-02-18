@@ -1,0 +1,13 @@
+#Informal; don't actually pass this to pip yet (also, syntax is wrong)
+
+python 3.8
+
+numpy 1.20
+pyserial 3.4 #imported as serial
+board #what's the deal with this? seems like we could just use busio, or something more lightweight? Needs more looking into
+RPi.GPIO 0.7.0
+timeloop 1.0.2 #important: need to edit source code like this: https://github.com/sankalpjonn/timeloop/pull/10/files
+
+numba 0.52
+
+#I think that's it?
