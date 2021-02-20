@@ -93,33 +93,33 @@ failures.sort(key=lambda x: x[2])
 
 # Next, convert digital sensor 'dead' failures to error states
 dead_failures = [failure for failure in failures if (failure[0] < 3) and (failure[1] in (0, 3))]
-error_states = [[0, flight_duration, 0]] #-> start_t, end_t, event state
+dig_error_states = [[0, flight_duration, 0]] #-> start_t, end_t, event state
 for fail in dead_failures:
     sensor = 2 ** fail[0]
     state = bool(fail[1]) # i.e 1 if Dead, 0 if Normal
     time = fail[2]
 
     indx = -1
-    for i in range(len(error_states)):
-        if (error_states[i][0] < time) and (error_states[i][1] == flight_duration or error_states[i+1][0] > time):
+    for i in range(len(dig_error_states)):
+        if (dig_error_states[i][0] < time) and (dig_error_states[i][1] == flight_duration or dig_error_states[i+1][0] > time):
             # insert a new tuple starting at transition time and taking the previous tuple's end time
-            error_states.insert(i + 1, [time, error_states[i][1], error_states[i][2]])
+            dig_error_states.insert(i + 1, [time, dig_error_states[i][1], dig_error_states[i][2]])
             # set previous tuple's end time to transition time
-            error_states[i][1] = time 
+            dig_error_states[i][1] = time 
             indx = i
             break
-        elif error_states[i + 1][0] == time:
+        elif dig_error_states[i + 1][0] == time:
             # no need for a new tuple
             indx = i
             break
 
     # bitwise xor with new state for each tuple, starting from the new one,
     # but only if there is a toggle to be done
-    if (error_states[indx][2] & sensor) != state:
-        for i in range(indx + 1, len(error_states)):
-            error_states[i][2] ^= sensor
+    if (dig_error_states[indx][2] & sensor) != state:
+        for i in range(indx + 1, len(dig_error_states)):
+            dig_error_states[i][2] ^= sensor
 
-configs["dig_error_states"] = error_states
+configs["dig_error_states"] = dig_error_states
 
 # Next, parse normal/min/max for all sensors 
 # outputted: list of (start_t, end_t, <state>) like above but <state> is a 
@@ -127,7 +127,7 @@ configs["dig_error_states"] = error_states
 # 0, 1, or 2 (being Normal, Min, and Max)
 
 all_failures = [f for f in failures if f[1] != 3]
-error_states = [[0, flight_duration, [0]*16]] #-> start_t, end_t, state
+all_error_states = [[0, flight_duration, [0]*16]] #-> start_t, end_t, state
 
 for fail in all_failures:
     sensor = fail[0]
@@ -135,24 +135,24 @@ for fail in all_failures:
     time = fail[2]
 
     indx = -1
-    for i in range(len(error_states)):
-        if (error_states[i][0] < time) and (error_states[i][1] == flight_duration or error_states[i+1][0] > time):
+    for i in range(len(all_error_states)):
+        if (all_error_states[i][0] < time) and (all_error_states[i][1] == flight_duration or all_error_states[i+1][0] > time):
             # insert a new tuple starting at transition time and taking the previous tuple's end time
-            error_states.insert(i + 1, [time, error_states[i][1], error_states[i][2].copy()])
+            all_error_states.insert(i + 1, [time, all_error_states[i][1], all_error_states[i][2].copy()])
             # set previous tuple's end time to transition time
-            error_states[i][1] = time 
+            all_error_states[i][1] = time 
             indx = i
             break
-        elif error_states[i + 1][0] == time:
+        elif all_error_states[i + 1][0] == time:
             # no need for a new tuple
             indx = i
             break
 
     # update all following tuples with new state info
-    for i in range(indx + 1, len(error_states)):
-        error_states[i][2][sensor] = state
+    for i in range(indx + 1, len(all_error_states)):
+        all_error_states[i][2][sensor] = state
 
-configs["all_error_states"] = error_states
+configs["all_error_states"] = all_error_states
 
 
 if __name__ == "__main__":
