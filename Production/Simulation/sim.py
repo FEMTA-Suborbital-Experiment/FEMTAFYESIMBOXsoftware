@@ -1,11 +1,18 @@
 # Main virtual environment simulation file.
 
+import numpy as np
 import multiprocessing.shared_memory as sm
 
 import numba
 
 from .constants import *
 from .helpers import nvcVP, nvcRho, waterVP, HerKnu, waterHV, mDotThruOrifice
+
+# Set up shared memory
+sensor_mem = sm.SharedMemory(name="sensors") 
+valve_mem = sm.SharedMemory(name="valves")
+sensor_data = np.ndarray(shape=(15,), dtype=np.float64, buffer=sensor_mem.buf) #Edit with correct size
+valve_states = np.ndarray(shape=(6,), dtype=np.bool, buffer=valve_mem.buf)
 
 # Variable initializations
 volWater_tank = volWater0_tank                      #Initial volume of water in one Prop Tank [m^3]
@@ -36,5 +43,10 @@ dt = 1e-4    #timestep [s] (will not run accurately at more than 1e-5)
 def loop():
     pass
 
-while altitude:
-    loop()
+try:
+    while altitude:
+        loop()
+finally:
+    #Close shared memory
+    sensor_mem.close()
+    valve_mem.close()
