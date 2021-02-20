@@ -40,7 +40,7 @@ void setup() {
 void loop() {
   int nDevices = 0;
 
-  Serial.println("Scanning...");
+  Serial.println("Scanning by requests...");
 
   for (uint8_t addr = 0; addr < 128; ++addr)
   {
@@ -63,7 +63,29 @@ void loop() {
   Serial.print(nDevices);
   Serial.println(" devices responded.\n");
 
-  delay(1500);
+  nDevices = 0;
+  uint8_t tx_code;
+
+  Serial.println("Scanning by sends...");
+
+  for (uint8_t addr = 0; addr < 128; ++addr)
+  {
+    Wire.beginTransmission(addr);
+    Wire.write(addr);
+    tx_code = Wire.endTransmission();
+    if (tx_code == 0) //  Success
+    {
+      ++nDevices;
+      Serial.print("  Heard back from 0x");
+      Serial.println(addr, HEX);
+    }
+  }
+
+  Serial.print("A total of ");
+  Serial.print(nDevices);
+  Serial.println(" devices responded.\n");
+
+  delay(2000);
   
 /*
   for (byte address = 1; address < 127; ++address) {

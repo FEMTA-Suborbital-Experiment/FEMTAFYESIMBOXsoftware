@@ -19,6 +19,9 @@ from uv_conversion import uv_conversion, make_fake_uv
 from add_noise import fuzz
 from condition_functions import poll_valve_states, get_flight_conditions
 
+# Define Serial port info
+ARDUINO_PORT = "/dev/ttyACM0"
+SERIAL_BAUD = 115200
 
 # Define addresses
 DAC = (0x28, 0x29) #DAC I2C addresses
@@ -45,8 +48,22 @@ therm_cals = (lambda x: 0, lambda x: 0,
 
 # Set up connections (and misc.)
 i2c = busio.I2C(3, 2) #SCL, SDA
-arduino = serial.Serial("/dev/ttyACM0", baudrate=115200, timeout=1)
-arduino.flush()
+arduino = serial.Serial(ARDUINO_PORT, baudrate=SERIAL_BAUD, timeout=1)
+
+# Function to wait for Arduino on serial port to wake up
+"""
+The Arduino performs a reset whenever a new connection to the serial port is established. It
+takes a few seconds for it to complete this, at which point the first thing it does is send
+a message down the port signaling that it is ready. This should be run after establishing the
+serial port and before any other operations involving the Arduino.
+"""
+def waitForArduinoReady():
+    print("Waking up Arduino on serial port...")
+    arduino.flush()
+    while arduino.in_waiting == 0:
+        pass
+    print("Arduino awake!")
+
 
 sensor_mem = sm.SharedMemory(name="sensors", create=True, size=120) #Edit with correct size
 valve_mem = sm.SharedMemory(name="valves", create=True, size=6)
@@ -85,7 +102,7 @@ def run():
 
     for period in configs["all_error_states"]:
         if period[0] <= now() - start_t < period[1]:
-            error_state = period[2]
+            sensor_failures = period[2]
     
     # Incoming sensor data: (15 floats)
     # pres0, pres1, pres2, pres3, therm0, therm1, therm2, therm3, therm4,
@@ -122,7 +139,7 @@ def run():
     f0_data = flow_to_bytes(sensors[8], sensors[10], sensor_failures[0])
     f1_data = flow_to_bytes(sensors[9], sensors[11], sensor_failures[1])
     uv_data = uv_conversion(uva, uvb, uvc1, uvc2, uvd)
-    digital_data = [*f0_data, *f1_data, *uv_data, error_state]
+    digital_data = [error_state, *f0_data, *f1_data, *uv_data]
     
     #Prepare analog data to send to DACs
     analog_data_0 = [P[0], sensors[0], P[1], sensors[1],
@@ -148,6 +165,7 @@ def run():
     
 if __name__ == "__main__":
     try:
+        waitForArduinoReady()
         tl.start(block=True)
     finally:
         #Turn off LEDs

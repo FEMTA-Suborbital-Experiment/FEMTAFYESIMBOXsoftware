@@ -1,0 +1,64 @@
+>>DEBUG>> TWDR is 1 last_addr is 0 0x0 TWDR is 1 determined to be address 0x0
+Data REQUESTED from ADDRESS 0x00 (state is SHADOW)
+Address is in shadow, ignoring...
+
+>>DEBUG>> TWDR is 11 last_addr is 1 0x1 TWDR is 11 determined to be address 0x1
+Data REQUESTED from ADDRESS 0x01 (state is SHADOW)
+Address is in shadow, ignoring...
+
+>>DEBUG>> TWDR is 10001 last_addr is 1000 0x8 TWDR is 10001 determined to be address 0x8
+Data REQUESTED from ADDRESS 0x08 (state is ENABLED)
+Sending data from flow sensor #0
+
+>>DEBUG>> TWDR is 10011 last_addr is 1001 0x9 TWDR is 10011 determined to be address 0x9
+Data REQUESTED from ADDRESS 0x09 (state is ENABLED)
+Sending data from flow sensor #1
+
+>>DEBUG>> TWDR is 100001 last_addr is 10000 0x10 TWDR is 100001 determined to be address 0x10
+Data REQUESTED from ADDRESS 0x10 (state is ENABLED)
+Sending UVB data from UV sensor
+
+>>DEBUG>> TWDR is 100011 last_addr is 10001 0x11 TWDR is 100011 determined to be address 0x11
+Data REQUESTED from ADDRESS 0x11 (state is SHADOW)
+Address is in shadow, ignoring...
+
+>>DEBUG>> TWDR is 110001 last_addr is 11000 0x18 TWDR is 110001 determined to be address 0x18
+Data REQUESTED from ADDRESS 0x18 (state is SHADOW)
+Address is in shadow, ignoring...
+
+>>DEBUG>> TWDR is 110011 last_addr is 11001 0x19 TWDR is 110011 determined to be address 0x19
+Data REQUESTED from ADDRESS 0x19 (state is SHADOW)
+Address is in shadow, ignoring...
+
+>>DEBUG>> TWDR is 0 last_addr is 0 0x0 TWDR is 0 determined to be address 0x0
+Data RECEIVED (1 bytes) to ADDRESS 0x00 (state is SHADOW)
+Address is in shadow, ignoring...
+  Remaining data in buffer: 0x00
+>>DEBUG>> TWDR is 10000 last_addr is 1000 0x8 TWDR is 10000 determined to be address 0x8
+Data RECEIVED (1 bytes) to ADDRESS 0x08 (state is ENABLED)
+Flow sensor #0 written to
+  Remaining data in buffer: 0x01
+>>DEBUG>> TWDR is 10010 last_addr is 1001 0x9 TWDR is 10010 determined to be address 0x9
+Data RECEIVED (1 bytes) to ADDRESS 0x09 (state is ENABLED)
+Flow sensor #1 written to
+  Remaining data in buffer: 0x08
+>>DEBUG>> TWDR is 100000 last_addr is 10000 0x10 TWDR is 100000 determined to be address 0x10
+Data RECEIVED (1 bytes) to ADDRESS 0x10 (state is ENABLED)
+UV sensor command code updated: 0x09
+>>DEBUG>> TWDR is 100010 last_addr is 10001 0x11 TWDR is 100010 determined to be address 0x11
+Data RECEIVED (1 bytes) to ADDRESS 0x11 (state is SHADOW)
+Address is in shadow, ignoring...
+  Remaining data in buffer: 0x10
+>>DEBUG>> TWDR is 110000 last_addr is 11000 0x18 TWDR is 110000 determined to be address 0x18
+Data RECEIVED (1 bytes) to ADDRESS 0x18 (state is SHADOW)
+Address is in shadow, ignoring...
+  Remaining data in buffer: 0x11
+>>DEBUG>> TWDR is 110010 last_addr is 11001 0x19 TWDR is 110010 determined to be address 0x19
+Data RECEIVED (1 bytes) to ADDRESS 0x19 (state is SHADOW)
+Address is in shadow, ignoring...
+  Remaining data in buffer: 0x18
+>>DEBUG>> TWDR is 1000010 last_addr is 100110 0x26 TWDR is 1111000 determined to be address 0x0
+Data RECEIVED (1 bytes) to ADDRESS 0x00 (state is SHADOW)
+Address is in shadow, ignoring...
+  Remaining data in buffer: 0x19
+

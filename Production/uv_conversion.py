@@ -40,20 +40,20 @@ def make_fake_uv(state):
 
 def uv_conversion(uva, uvb, uvc1, uvc2, uvd):
     
-    output = [0] * 10
+    output = [0] * 8    # Arduino expects 8 bytes of data values (4 * 2-byte pairs)
 
     # Scale UVA data to a 16-bit resolution
     uva = twos_comp(int(uva))
-    uvd = twos_comp(int(uvd))
+    #uvd = twos_comp(int(uvd))  where did this come from? UV sensor only has A, B, C1, and C2
     uvb = twos_comp(int(uvb))
     uvc1 = twos_comp(int(uvc1))
     uvc2 = twos_comp(int(uvc2))
 
     #Format into high and low bytes
-    output[0:2] = divmod(uva, 256)
-    output[2:4] = divmod(uvd, 256)
-    output[4:6] = divmod(uvb, 256)
-    output[6:8] = divmod(uvc1, 256)
-    output[8:10] = divmod(uvc2, 256)
+    output[0:2] = divmod(uva, 256)[::-1]    # Reverse so data is in little endian order [lo, hi] = (remainder, quotient)
+    #output[2:4] = divmod(uvd, 256)
+    output[2:4] = divmod(uvb, 256)[::-1]
+    output[4:6] = divmod(uvc1, 256)[::-1]
+    output[6:8] = divmod(uvc2, 256)[::-1]
 
     return output
