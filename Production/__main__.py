@@ -8,7 +8,7 @@ import multiprocessing.shared_memory as sm
 
 import numpy as np
 import serial
-import board
+import busio
 import RPi.GPIO as GPIO
 from timeloop import Timeloop
 
@@ -44,7 +44,7 @@ therm_cals = (lambda x: 0, lambda x: 0,
 
 
 # Set up connections (and misc.)
-i2c = board.I2C()
+i2c = busio.I2C(3, 2) #SCL, SDA
 arduino = serial.Serial("/dev/ttyACM0", baudrate=115200, timeout=1)
 arduino.flush()
 

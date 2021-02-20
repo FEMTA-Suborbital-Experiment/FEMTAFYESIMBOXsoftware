@@ -4,7 +4,7 @@ python 3.8
 
 numpy 1.20
 pyserial 3.4 #imported as serial
-board #what's the deal with this? seems like we could just use busio, or something more lightweight? Needs more looking into
+busio #what's the deal with this? seems like we could just use something more lightweight (smbus2)? Needs more looking into
 RPi.GPIO 0.7.0
 timeloop 1.0.2 #important: need to edit source code like this: https://github.com/sankalpjonn/timeloop/pull/10/files
 
