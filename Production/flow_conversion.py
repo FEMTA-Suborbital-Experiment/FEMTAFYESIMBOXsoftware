@@ -42,7 +42,7 @@ def flow_to_bytes(flow_data, temp_data, state): #Input flow in ml/min, temp in C
     flags = 0 | (0x1 if air else 0x0) | (0x2 if high_flow else 0x0)
     
     #Set output bytes
-    output[0:1] = divmod(flow_data, 256)
+    output[0:2] = divmod(flow_data, 256) # Big endian order [hi, lo] = (quotient, remainder) is correct
     output[3:5] = divmod(temp_data, 256)
     output[7] = flags
     
