@@ -79,7 +79,6 @@ for pin in GPIO_PINS:
 start_t = 0
 tl = Timeloop()
 times = configs["event_times"]
-
 """
 Note on sensor failures:
 There are two types of failure: first, digital sensors can stop
@@ -134,7 +133,8 @@ def run():
 
         
     # Make fake UV and mass spec. data 
-    uva, uvb, uvc1, uvc2, uvd = make_fake_uv(sensor_failures[2])
+    #uva, uvb, uvc1, uvc2, uvd = make_fake_uv(sensor_failures[2]) -> removed uvd for now
+    uva, uvb, uvc1, uvc2 = make_fake_uv(sensor_failures[2])
     mass0, mass1 = make_fake_ms(sensor_failures[12], sensor_failures[13])
 
     # Process IR error states
@@ -148,7 +148,8 @@ def run():
     #9 bytes for each flow, 10 for UV, 1 for error state
     f0_data = flow_to_bytes(sensors[8], sensors[10], sensor_failures[0])
     f1_data = flow_to_bytes(sensors[9], sensors[11], sensor_failures[1])
-    uv_data = uv_conversion(uva, uvb, uvc1, uvc2, uvd)
+    #uv_data = uv_conversion(uva, uvb, uvc1, uvc2, uvd) -> removed uvd for now
+    uv_data = uv_conversion(uva, uvb, uvc1, uvc2)
     digital_data = [error_state, *f0_data, *f1_data, *uv_data]
     
     #Prepare analog data to send to DACs
