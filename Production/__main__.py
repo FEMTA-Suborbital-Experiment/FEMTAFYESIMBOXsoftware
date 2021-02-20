@@ -79,6 +79,16 @@ for pin in GPIO_PINS:
 start_t = 0
 tl = Timeloop()
 times = configs["event_times"]
+
+"""
+Note on sensor failures:
+There are two types of failure: first, digital sensors can stop
+responding over I2C. This data comes from the config parser in
+config["dig_error_states"], and is stored here for each loop in error_state.
+The other type can apply to any sensor, and it is setting it at maximum
+or minimum output. This comes from config["all_error_states"] and
+is saved here in sensor_failures.
+"""
 error_state = 0 #Making I2C sensors stop responding
 sensor_failures = [0] * 16 #All sensors, normal/min/max. Indices:
 # Flow0, Flow1, UV, Pres0, Pres1, Pres2, Pres3, Therm0, 
