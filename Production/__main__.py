@@ -46,7 +46,7 @@ therm_cals = (lambda x: 0, lambda x: 0,
               lambda x: 0)
 
 
-# Set up connections (and misc.)
+# Set up Arduino
 i2c = busio.I2C(3, 2) #SCL, SDA
 arduino = serial.Serial(ARDUINO_PORT, baudrate=SERIAL_BAUD, timeout=1)
 
@@ -64,18 +64,20 @@ def waitForArduinoReady():
         pass
     print("Arduino awake!")
 
-
+# Set up shared memory
 sensor_mem = sm.SharedMemory(name="sensors", create=True, size=120) #Edit with correct size
 valve_mem = sm.SharedMemory(name="valves", create=True, size=6)
 sensor_data = np.ndarray(shape=(15,), dtype=np.float64, buffer=sensor_mem.buf)
 valve_states = np.ndarray(shape=(6,), dtype=np.bool, buffer=valve_mem.buf)
 valve_states[:] = [True, True, True, True, True, True] # Edit to appropriate starting states
 
+# GPIO setup
 GPIO.setup(RED, GPIO.OUT)
 GPIO.setup(GRN, GPIO.OUT)
 for pin in GPIO_PINS:
     GPIO.setup(pin, GPIO.IN)
 
+# Miscellaneous setup and initialization
 start_t = 0
 tl = Timeloop()
 times = configs["event_times"]
