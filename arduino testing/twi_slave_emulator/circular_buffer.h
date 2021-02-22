@@ -166,7 +166,7 @@ public:
     
     if (data_array != NULL)
     {
-      for (size_t i = 0; i < num_el; ++num_el)
+      for (size_t i = 0; i < num_el; ++i)
       {
         last_write = write(data_array[i]);
         n_vals += last_write;

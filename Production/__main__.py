@@ -8,7 +8,7 @@ import multiprocessing.shared_memory as sm
 
 import numpy as np
 import serial
-import board
+import busio
 import RPi.GPIO as GPIO
 from timeloop import Timeloop
 
@@ -19,6 +19,9 @@ from uv_conversion import uv_conversion, make_fake_uv
 from add_noise import fuzz
 from condition_functions import poll_valve_states, get_flight_conditions
 
+# Define Serial port info
+ARDUINO_PORT = "/dev/ttyACM0"
+SERIAL_BAUD = 115200
 
 # Define addresses
 DAC = (0x28, 0x29) #DAC I2C addresses
@@ -44,9 +47,23 @@ therm_cals = (lambda x: 0, lambda x: 0,
 
 
 # Set up connections (and misc.)
-i2c = board.I2C()
-arduino = serial.Serial("/dev/ttyACM0", baudrate=115200, timeout=1)
-arduino.flush()
+i2c = busio.I2C(3, 2) #SCL, SDA
+arduino = serial.Serial(ARDUINO_PORT, baudrate=SERIAL_BAUD, timeout=1)
+
+# Function to wait for Arduino on serial port to wake up
+"""
+The Arduino performs a reset whenever a new connection to the serial port is established. It
+takes a few seconds for it to complete this, at which point the first thing it does is send
+a message down the port signaling that it is ready. This should be run after establishing the
+serial port and before any other operations involving the Arduino.
+"""
+def waitForArduinoReady():
+    print("Waking up Arduino on serial port...")
+    arduino.flush()
+    while arduino.in_waiting == 0:
+        pass
+    print("Arduino awake!")
+
 
 sensor_mem = sm.SharedMemory(name="sensors", create=True, size=120) #Edit with correct size
 valve_mem = sm.SharedMemory(name="valves", create=True, size=6)
@@ -62,6 +79,15 @@ for pin in GPIO_PINS:
 start_t = 0
 tl = Timeloop()
 times = configs["event_times"]
+"""
+Note on sensor failures:
+There are two types of failure: first, digital sensors can stop
+responding over I2C. This data comes from the config parser in
+config["dig_error_states"], and is stored here for each loop in error_state.
+The other type can apply to any sensor, and it is setting it at maximum
+or minimum output. This comes from config["all_error_states"] and
+is saved here in sensor_failures.
+"""
 error_state = 0 #Making I2C sensors stop responding
 sensor_failures = [0] * 16 #All sensors, normal/min/max. Indices:
 # Flow0, Flow1, UV, Pres0, Pres1, Pres2, Pres3, Therm0, 
@@ -85,7 +111,7 @@ def run():
 
     for period in configs["all_error_states"]:
         if period[0] <= now() - start_t < period[1]:
-            error_state = period[2]
+            sensor_failures = period[2]
     
     # Incoming sensor data: (15 floats)
     # pres0, pres1, pres2, pres3, therm0, therm1, therm2, therm3, therm4,
@@ -107,7 +133,8 @@ def run():
 
         
     # Make fake UV and mass spec. data 
-    uva, uvb, uvc1, uvc2, uvd = make_fake_uv(sensor_failures[2])
+    #uva, uvb, uvc1, uvc2, uvd = make_fake_uv(sensor_failures[2]) -> removed uvd for now
+    uva, uvb, uvc1, uvc2 = make_fake_uv(sensor_failures[2])
     mass0, mass1 = make_fake_ms(sensor_failures[12], sensor_failures[13])
 
     # Process IR error states
@@ -121,8 +148,9 @@ def run():
     #9 bytes for each flow, 10 for UV, 1 for error state
     f0_data = flow_to_bytes(sensors[8], sensors[10], sensor_failures[0])
     f1_data = flow_to_bytes(sensors[9], sensors[11], sensor_failures[1])
-    uv_data = uv_conversion(uva, uvb, uvc1, uvc2, uvd)
-    digital_data = [*f0_data, *f1_data, *uv_data, error_state]
+    #uv_data = uv_conversion(uva, uvb, uvc1, uvc2, uvd) -> removed uvd for now
+    uv_data = uv_conversion(uva, uvb, uvc1, uvc2)
+    digital_data = [error_state, *f0_data, *f1_data, *uv_data]
     
     #Prepare analog data to send to DACs
     analog_data_0 = [P[0], sensors[0], P[1], sensors[1],
@@ -148,6 +176,7 @@ def run():
     
 if __name__ == "__main__":
     try:
+        waitForArduinoReady()
         tl.start(block=True)
     finally:
         #Turn off LEDs
