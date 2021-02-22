@@ -240,11 +240,11 @@ while time<max(t)
 end
     """
 
-
-try:
-    while altitude:
-        loop()
-finally:
-    #Close shared memory
-    sensor_mem.close()
-    valve_mem.close()
+def run():
+    try:
+        while altitude:
+            loop()
+    finally:
+        #Close shared memory
+        sensor_mem.close()
+        valve_mem.close()
