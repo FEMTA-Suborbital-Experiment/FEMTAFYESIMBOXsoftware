@@ -18,6 +18,7 @@ from mass_spec import make_fake_ms
 from uv_conversion import uv_conversion, make_fake_uv
 from add_noise import fuzz
 from condition_functions import poll_valve_states, get_flight_conditions
+from virtual_environment import VirtualEnvironmentProcess
 
 # Define Serial port info
 ARDUINO_PORT = "/dev/ttyACM0"
@@ -177,11 +178,16 @@ def run():
 if __name__ == "__main__":
     try:
         waitForArduinoReady()
+        venv = VirtualEnvironmentProcess()
+        venv.start()
+        venv.join()
         tl.start(block=True)
     finally:
         #Turn off LEDs
         GPIO.output(GRN, GPIO.LOW)
         GPIO.output(RED, GPIO.LOW)
+
+        venv.exit()
 
         #Close shared memory
         sensor_mem.close()
