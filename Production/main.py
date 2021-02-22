@@ -18,7 +18,7 @@ from mass_spec import make_fake_ms
 from uv_conversion import uv_conversion, make_fake_uv
 from add_noise import fuzz
 from condition_functions import poll_valve_states, get_flight_conditions
-from virtual_environment import VirtualEnvironmentProcess
+from Simulation.sim import run as run_sim
 
 # Define Serial port info
 ARDUINO_PORT = "/dev/ttyACM0"
@@ -180,10 +180,10 @@ def run():
 if __name__ == "__main__":
     try:
         waitForArduinoReady()
-        venv = VirtualEnvironmentProcess()
+        venv = mp.Process(target=run_sim)
         venv.start()
-        venv.join()
         tl.start(block=True)
+        venv.join()
     finally:
         #Turn off LEDs
         GPIO.output(GRN, GPIO.LOW)
