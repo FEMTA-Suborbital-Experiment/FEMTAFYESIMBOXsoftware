@@ -1,5 +1,6 @@
 # Main file to run on Raspberry Pi to coordinate simbox operations.
 
+from time import sleep
 from datetime import datetime, timedelta
 now = datetime.now
 import multiprocessing as mp
@@ -46,10 +47,30 @@ therm_cals = (lambda x: 0, lambda x: 0,
               lambda x: 0, lambda x: 0,
               lambda x: 0)
 
+# Set up I2C for ADC control
+i2c = busio.I2C(3, 2) #SCL, SDA
+
+# Function to wait for I2C lock to be given
+"""
+Obtaining I2C lock grants sole access to the I2C bus and it is good practice to request a
+lock to ensure stability and predictability. The I2C bus can be run without obtaining a
+lock without issues assuming nothing else will try to touch the bus.
+"""
+def waitForI2CBusLock(timeout=1.0):
+    print("Waiting for lock on I2C bus to be granted", end='')
+    t_start = datetime.now()
+    t_delta = timedelta(seconds=timeout)
+    while not i2c.try_lock():
+        if datetime.now() - t_start > t_delta:
+            raise RuntimeError("Waiting for I2C lock port timed out")
+        print(".", end='')
+        sleep(0.1)  # Don't hog the processor busywaiting
+    print("\nI2C lock obtained")
 
 # Set up Arduino
-i2c = busio.I2C(3, 2) #SCL, SDA
-arduino = serial.Serial(ARDUINO_PORT, baudrate=SERIAL_BAUD, timeout=1)
+# 0s timeout means read is non-blocking and returns buffered bytes immediately
+arduino = serial.Serial(baudrate=SERIAL_BAUD, timeout=0.0)
+arduino.port = ARDUINO_PORT # Specifying port here (not in constructor) prevents port from opening until ready
 
 # Function to wait for Arduino on serial port to wake up
 """
@@ -58,12 +79,17 @@ takes a few seconds for it to complete this, at which point the first thing it d
 a message down the port signaling that it is ready. This should be run after establishing the
 serial port and before any other operations involving the Arduino.
 """
-def waitForArduinoReady():
-    print("Waking up Arduino on serial port...")
+def waitForArduinoReady(timeout=5.0):
+    print("Waiting for Arduino on serial port", end='')
     arduino.flush()
+    t_start = datetime.now()
+    t_delta = timedelta(seconds=timeout)
     while arduino.in_waiting == 0:
-        pass
-    print("Arduino awake!")
+        if datetime.now() - t_start > t_delta:
+            raise RuntimeError("Waiting for Arduino over serial port timed out")
+        print(".", end='')
+        sleep(0.5) # Don't hog the processor busywaiting
+    print("\nArduino has signaled ready")
 
 # Set up shared memory
 sensor_mem = sm.SharedMemory(name="sensors", create=True, size=120) #Edit with correct size
@@ -179,7 +205,10 @@ def run():
     
 if __name__ == "__main__":
     try:
-        waitForArduinoReady()
+        waitForI2CBusLock(1.0)      # Wait for exclusive access to I2C port (usually instant)
+        arduino.open()              # Open serial port
+        waitForArduinoReady(5.0)    # Wait for Arduino to signal ready
+
         venv = mp.Process(target=run_sim)
         venv.start()
         tl.start(block=True)
@@ -196,3 +225,8 @@ if __name__ == "__main__":
         valve_mem.close()
         sensor_mem.unlink()
         sensor_mem.unlink()
+
+        # Close up busses when done
+        arduino.close()
+        i2c.unlock()
+        i2c.deinit()
