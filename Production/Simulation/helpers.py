@@ -2,7 +2,7 @@
 
 import numpy as np
 import numba
-from .constants import *
+from constants import *
 
 # Vapor Pressure of NV 7100 (T in K, vp in Pa)
 def nvcVP(T):

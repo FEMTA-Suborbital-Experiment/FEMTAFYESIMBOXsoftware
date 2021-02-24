@@ -5,8 +5,8 @@ import multiprocessing.shared_memory as sm
 
 import numba
 
-from .constants import *
-from .helpers import nvcVP, nvcRho, waterVP, HerKnu, waterHV, mDotThruOrifice, StandardAtm
+from constants import *
+from helpers import nvcVP, nvcRho, waterVP, HerKnu, waterHV, mDotThruOrifice, StandardAtm
 
 # Set up shared memory
 sensor_mem = sm.SharedMemory(name="sensors") 
@@ -154,7 +154,7 @@ def loop():
             Q_water = m_water_transfer * h_evap_water
             mwn = flo_water * rho_water * dt
             T1 = ((m_water_liquid - mwn) / m_water_liquid) * CCTempLiquid
-            T2= (mwn / m_water_liquid) * 300
+            T2 = (mwn / m_water_liquid) * 300
             T3 = -Q_water / (m_water_liquid * Cp_water_liquid)
             CCTempLiquid = T1 + T2 + T3
 
