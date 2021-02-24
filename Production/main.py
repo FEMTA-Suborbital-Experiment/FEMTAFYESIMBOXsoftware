@@ -20,6 +20,7 @@ from uv_conversion import uv_conversion, make_fake_uv
 from add_noise import fuzz
 from condition_functions import poll_valve_states, get_flight_conditions
 from Simulation.sim import run as run_sim
+from serial_interface import StartSerialForwarding
 
 # Define Serial port info
 ARDUINO_PORT = "/dev/ttyACM0"
@@ -68,8 +69,9 @@ def waitForI2CBusLock(timeout=1.0):
     print("\nI2C lock obtained")
 
 # Set up Arduino
-# 0s timeout means read is non-blocking and returns buffered bytes immediately
-arduino = serial.Serial(baudrate=SERIAL_BAUD, timeout=0.0)
+# 0s timeout means read is non-blocking and returns buffered bytes immediately,
+# None timeout means wait until requested bytes or terminator character received
+arduino = serial.Serial(baudrate=SERIAL_BAUD, timeout=None)
 arduino.port = ARDUINO_PORT # Specifying port here (not in constructor) prevents port from opening until ready
 
 # Function to wait for Arduino on serial port to wake up
@@ -209,7 +211,9 @@ if __name__ == "__main__":
         arduino.open()              # Open serial port
         waitForArduinoReady(5.0)    # Wait for Arduino to signal ready
 
+        serial_handler = mp.Process(target=StartSerialForwarding, args=(arduino,), daemon=True) # Daemon process for serial port
         venv = mp.Process(target=run_sim)
+        serial_handler.start()
         venv.start()
         tl.start(block=True)
         venv.join()
