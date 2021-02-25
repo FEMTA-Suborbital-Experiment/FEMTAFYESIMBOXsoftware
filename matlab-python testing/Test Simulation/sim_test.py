@@ -73,14 +73,13 @@ nWaterVapor_CC_array = np.empty(t.shape)
 altitude_array = np.empty(t.shape)
 flo_water_array = np.empty(t.shape)
 
-alt_array = np.empty(t.shape)
-def alt_interp(instantaneous_time, arr_index): # altitude interpolation function 
-    alt_array[arr_index] = np.interp(instantaneous_time, t, h)
+def alt_interp(instantaneous_time): # altitude interpolation function 
+    return np.interp(instantaneous_time, t, h)
 
 while time < max(t) and count < 99840:
     if not count % 5000: print(count)
         
-    alt = alt_interp(time, count)
+    alt = alt_interp(time)
     _, ambientP, _ = StandardAtm(alt)
     
     if volWater_tank - volWater_shut < 0:
