@@ -9,7 +9,7 @@ def twos_comp(num):
     return num if num >= 0 else 65536 + num
 
 
-@jit
+@jit(uint16)
 def sine_generator(step_size, amplitude):
     x = 0
     while True:
