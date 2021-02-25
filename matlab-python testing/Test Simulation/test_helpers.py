@@ -76,7 +76,7 @@ def StandardAtm(h):
     rho_sea = 1.2250     #density at sea level, kg/ m^3
     p_sea   = 1.01325e5  #pressure at sea level, N/m^2
     R       = 287        #gas constant, J/kg/K
-    g_zero  = 9.81       #gravitatoinal acceleration, m/s^2
+    g_zero  = 9.81       #gravitational acceleration, m/s^2
 
     T_set   = [288.16, 216.66, 216.66, 282.66, 282.66, 165.66, 165.66, 225.66] #list of temperature points that define endpoints of each layer (starting at the ground), K
     h_set   = [0, 11000, 25000, 47000, 53000, 79000, 90000, 105000] #list of altitude points that define endpoints of each layer (starting at the ground), m
@@ -102,8 +102,8 @@ def StandardAtm(h):
     if layer % 2 != 1:
         # Gradient layer
         T = T_set[layer] + (a_set[layer] * (h - h_set[layer])) #temperature equation for gradient layer, K
-        p = p_set[layer] * ((T / T_set[layer]) ** (-g_zero / (a_set[layer] * R))) #pressure equation for gradient layer, N/m^2
-        rho = rho_set[layer] * ((T / T_set[layer]) ** ((-g_zero / (a_set[layer] * R)) + 1)) #density equation for gradient layer, kg/m^3
+        p = p_set[layer] * pow((T / T_set[layer]), (-g_zero / (a_set[layer] * R))) #pressure equation for gradient layer, N/m^2
+        rho = rho_set[layer] * pow((T / T_set[layer]), ((-g_zero / (a_set[layer] * R)) + 1)) #density equation for gradient layer, kg/m^3
         
     else:
         # Isothermal layers
@@ -111,5 +111,5 @@ def StandardAtm(h):
         p = p_set[layer] * np.exp((-g_zero * (h - h_set[layer])) / (R * T)) #pressure equation for isothermal layer, N/m^2
         rho = (p * rho_set[layer]) / p_set[layer] #density equation for isothermal layer, kg/m^3
     
-    return T, p, rho
+    return p
        
