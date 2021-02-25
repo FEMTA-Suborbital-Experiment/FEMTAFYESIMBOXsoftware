@@ -5,6 +5,7 @@
 # based on whether the time passed is greater than the preset
 # elements of the flight condition.
 from datetime import datetime
+from numba import jit, uint8, boolean
 
 now = datetime.now
 
@@ -12,6 +13,7 @@ now = datetime.now
 # valve_states is a boolean six-element list
 # if none of the valve states are open or
 # the flow solenoid is open (undefined), return 0 (false)
+@jit(uint8(boolean[:]))
 def poll_valve_states(valve_states):
     sim_condition = 0
 
@@ -28,6 +30,8 @@ def poll_valve_states(valve_states):
 
 # time is a datetime object that represents the past
 # times is a 5-tuple that represent the critical points of the simulation
+# return a uint8-type flight condition
+@jit(uint8)
 def get_flight_condition(time, times):
 
     flight_condition = 0
