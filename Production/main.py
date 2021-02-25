@@ -111,6 +111,10 @@ for pin in GPIO_PINS:
 start_t = 0
 tl = Timeloop()
 times = configs["event_times"]
+h = np.load("matlab-python testing/Test Simulation/altitude.npy").reshape((99840,))
+t = np.load("matlab-python testing/Test Simulation/time.npy").reshape((99840,))
+altitude = 0
+
 """
 Note on sensor failures:
 There are two types of failure: first, digital sensors can stop
@@ -136,6 +140,8 @@ def run():
     if not start_t:
         GPIO.output(GRN, GPIO.HIGH)
         start_t = now()
+
+    altitude = np.interp(now() - start_t, t, h)
 
     # Determine new sensor failures
     for period in configs["dig_error_states"]:
