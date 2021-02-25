@@ -8,6 +8,7 @@ import multiprocessing.shared_memory as sm
 #import socket
 
 import numpy as np
+from numba import jit, float32
 import serial
 import busio
 import RPi.GPIO as GPIO
@@ -127,6 +128,7 @@ sensor_failures = [0] * 16 #All sensors, normal/min/max. Indices:
 
 #Main looping function
 @tl.job(interval=timedelta(seconds=1/(configs["frequency"])))
+@jit
 def run():
     global sensor_data, valve_states, error_state, start_t
     
@@ -222,7 +224,7 @@ if __name__ == "__main__":
         GPIO.output(GRN, GPIO.LOW)
         GPIO.output(RED, GPIO.LOW)
 
-        venv.exit()
+        venv.close()
 
         #Close shared memory
         sensor_mem.close()
