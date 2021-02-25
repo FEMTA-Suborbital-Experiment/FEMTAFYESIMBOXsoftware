@@ -87,45 +87,48 @@ def mDotThruOrifice(in1, in2, rho, gamma, outletCD, outletDia):
     mDot = outletCD * outletArea * np.sqrt(upP * rho * (2 * gamma / (gamma-1)) * np.pow(r, (2 / gamma)) * (1 - np.pow(r, ((gamma - 1) / gamma)))) #kg/s
     return mDot * direction #Corrects sign on mDot to follow stated convention above
 
-@jit(float32(float32), fastmath=toggle_fastmath, nopython=True)
-def StandardAtm(h):
-    rho_sea = 1.2250     # density at sea level, kg/ m^3
-    p_sea   = 1.01325e5  # pressure at sea level, N/m^2
-    R       = 287        # gas constant, J/kg/K
-    g_zero  = 9.81       # gravitational acceleration, m/s^2
 
-    T_set   = [288.16, 216.66, 216.66, 282.66, 282.66, 165.66, 165.66, 225.66] # list of temperature points that define endpoints of each layer (starting at the ground), K
-    h_set   = [0, 11000, 25000, 47000, 53000, 79000, 90000, 105000] #list of altitude points that define endpoints of each layer (starting at the ground), m
-    a_set   = [-6.5e-3, 0, 3e-3, 0, -4.5e-3, 0, 4e-3] #list of gradient layer slopes (starting at the ground), K/m
-    p_set   = [p_sea, 2.27e4, 2.5273e3, 1.2558e2, 61.493, 1.2595, 0.162723] # list of pressure at each layer endpoint, N/m^2
-    rho_set = [rho_sea, 3.648e-1, 4.0639e-2, 1.5535e-3, 7.5791e-4, 2.184e-5, 1.84114e-6] # list of density at each layer endpoint, kg/m^3
+@jit(float32[:])
+def StandardAtm(h):
+    
+    rho_sea = 1.2250;     # density at sea level, kg/ m^3
+    p_sea   = 1.01325*pow(10,5);  # pressure at sea level, N/m^2
+    R       = 287;        # gas constant, J/kg/K
+    g_zero  = 9.81;       # gravitatoinal acceleration, m/s^2
+
+    T_set   = [288.16,216.66,216.66,282.66,282.66,165.66,165.66,225.66]; # list of temperature points that define endpoints of each layer (starting at the ground), K
+    h_set   = [0,11000,25000,47000,53000,79000,90000,105000]; #list of altitude points that define endpoints of each layer (starting at the ground), m
+    a_set   = [-6.5*pow(10,-3),0,3*pow(10,-3),0,-4.5*pow(10,-3),0,4*pow(10,-3)];#list of gradient layer slopes (starting at the ground), K/m
+    p_set   = [p_sea, 2.27*pow(10,4), 2.5273*pow(10,3), 1.2558*pow(10,2), 61.493, 1.2595, 0.162723]; # list of pressure at each layer endpoint, N/m^2
+    rho_set = [rho_sea, 3.648*pow(10,-1), 4.0639*pow(10,-2), 1.5535*pow(10,-3), 7.5791*pow(10,-4), 2.184*pow(10,-5), 1.84114*pow(10,-6)]; # list of density at each layer endpoint, kg/m^3
             
     if h <= h_set[1]:
-        layer = 0
+        layer = 0;
     elif h <= h_set[2]:
-        layer = 1
+        layer = 1;
     elif h <= h_set[3]:
-        layer = 2
+        layer = 2;
     elif h <= h_set[4]:
-        layer = 3
+        layer = 3;
     elif h <= h_set[5]:
-        layer = 4
+        layer = 4;
     elif h <= h_set[6]:
-        layer = 5
+        layer = 5;
     else:
-        layer = 6
+        layer = 6;
     
     
-    if layer % 2 != 1:
+    if (layer+1)%2 == 1:
         #Gradient layer
-        T = T_set[layer] + (a_set[layer] * (h - h_set[layer])) # temperature equation for gradient layer, K
-        p = p_set[layer] * (pow((T / T_set[layer]), (-g_zero / (a_set[layer] * R)))) # pressure equation for gradient layer, N/m^2
-        rho = rho_set[layer] * pow((T / T_set[layer]), ((-g_zero / (a_set[layer] * R)) +1 )) # density equation for gradient layer, kg/m^3
+        T = T_set[layer] + (a_set[layer] * (h - h_set[layer])); # temperature equation for gradient layer, K
+        p = p_set[layer] * (pow((T / T_set[layer]), (-g_zero / (a_set[layer] * R)))); # pressure equation for gradient layer, N/m^2
+        rho = rho_set[layer]* pow((T / T_set[layer]),((-g_zero / (a_set[layer]*R))+1)); # density equation for gradient layer, kg/m^3
         
     else:
         #Isothermal layers
-        T = T_set[layer] # temperature for isothermal layer, K
-        p = p_set[layer] * np.exp((-g_zero * (h - h_set[layer])) / (R * T)) # pressure equation for isothermal layer, N/m^2
-        rho = (p * rho_set[layer]) / p_set[layer] # density equation for isothermal layer, kg/m^3
+        T = T_set[layer]; # temperature for isothermal layer, K
+        p = p_set[layer] * exp((-g_zero * (h - h_set[layer])) / (R * T)); # pressure equation for isothermal layer, N/m^2
+        rho = (p * rho_set[layer]) / p_set[layer]; # density equation for isothermal layer, kg/m^3
     
-    return p
+    return [T,p,rho]
+
