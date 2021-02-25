@@ -1,10 +1,10 @@
 # Collection of commonly-used functions across multiple modules.
 
 import math
-from numba import jit, uint16
+from numba import jit, uint16, int16
 
 
-@jit(uint16(uint16))
+@jit(uint16(int16))
 def twos_comp(num):
     return num if num >= 0 else 65536 + num
 
