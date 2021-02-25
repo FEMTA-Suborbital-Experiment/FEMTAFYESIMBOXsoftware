@@ -88,6 +88,7 @@ def mDotThruOrifice(in1, in2, rho, gamma, outletCD, outletDia):
     return mDot * direction #Corrects sign on mDot to follow stated convention above
 
 
+@jit(float32[:])
 def StandardAtm(h):
     
     rho_sea = 1.2250;     # density at sea level, kg/ m^3
