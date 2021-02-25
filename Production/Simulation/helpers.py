@@ -130,7 +130,4 @@ def StandardAtm(h):
         rho = (p * rho_set[layer]) / p_set[layer]; # density equation for isothermal layer, kg/m^3
     
     return [T,p,rho]
-count = 0
-while(count<100000):
-    print(StandardAtm(count)[1]/10000, "Meters: ",count)
-    count+=1000
+
