@@ -2,6 +2,7 @@
 
 import numpy as np
 import multiprocessing.shared_memory as sm
+from numba import jit, void
 
 import numba
 
@@ -40,6 +41,7 @@ time = 0
 dt = 2e-4    #timestep [s] (maximum: 2e-4)
 
 
+@jit(void)
 def loop():
         #alt=interp1(t,h,time); do this from main.py and put altitude in shared array
         _, ambientP, _ = StandardAtm(altitude)
