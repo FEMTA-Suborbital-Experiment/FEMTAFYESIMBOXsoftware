@@ -60,17 +60,18 @@ def mDotThruOrifice(in1, in2, rho, gamma, outletCD, outletDia):
     gamma_const = np.power(2 / (gamma + 1), gamma / (gamma - 1))
     criticalP = upP * gamma_const
 
-    if(downP < criticalP): #Choked
+    if downP < criticalP: #Choked
+        print("Choked")
         r = downP / criticalP
         r = gamma_const
-        mDot = outletCD * outletArea * np.sqrt(upP * rho * (2 * gamma / (gamma-1)) * np.power(r, (2 / gamma)) * (1 - er(r, ((gamma - 1) / gamma)))) #kg/s
+        mDot = outletCD * outletArea * np.sqrt(upP * rho * (2 * gamma / (gamma-1)) * np.power(r, (2 / gamma)) * (1 - np.power(r, ((gamma - 1) / gamma)))) #kg/s
     else: #Subsonic
         r = downP / upP
         mDot = outletCD * outletArea * np.sqrt(upP * rho * (2 * gamma / (gamma-1)) * np.power(r, (2 / gamma)) * (1 - np.power(r, ((gamma - 1) / gamma)))) #kg/s
 
     return mDot * direction #Corrects sign on mDot to follow stated convention above
 
-# Outputs temperature [K], Pressure [Pa], and density [kg/m^3] given an altitude  
+# Outputs temperature [K], Pressure [Pa], and density [kg/m^3] given an altitude  NOTE: has been verified in accuracy (at least for pressure, all we care about)
 def StandardAtm(h):
     rho_sea = 1.2250     #density at sea level, kg/ m^3
     p_sea   = 1.01325e5  #pressure at sea level, N/m^2

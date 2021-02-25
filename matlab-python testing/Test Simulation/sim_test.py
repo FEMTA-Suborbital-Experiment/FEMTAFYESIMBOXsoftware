@@ -72,10 +72,11 @@ m_lost_array = np.empty(t.shape)
 nWaterVapor_CC_array = np.empty(t.shape)
 altitude_array = np.empty(t.shape)
 flo_water_array = np.empty(t.shape)
-exp_time_array = np.empty(t.shape)
 
 
-while count < 20000: #t < max(t)
+while time < max(t) and count < 99840:
+    if not count % 5000: print(count)
+
     alt = np.interp(time, t, h)
     _, ambientP, _ = StandardAtm(alt)
     
@@ -91,7 +92,7 @@ while count < 20000: #t < max(t)
         ventSol = 1
     
     # Conditions for loop termination
-    if flowSol == 1 and  volWater_shut == 0:
+    if flowSol == 1 and volWater_shut == 0:
         volWater_shut = 0.5 * volWater_tank
     elif flowSol == 2:
         volWater_shut = 0
@@ -255,9 +256,9 @@ while count < 20000: #t < max(t)
 # -=-=- PLOTS -=-=-
 # Volumes of both Prop Tank and CC
 plt.figure(1)
-plt.plot(time_array, tankVolWater_array * 10**6, linewidth=3)
+plt.plot(time_array[:count], tankVolWater_array[:count] * 10**6, linewidth=3)
 #hold on
-plt.plot(time_array, CCVolWater_array * 10**6, linewidth=3)
+plt.plot(time_array[:count], CCVolWater_array[:count] * 10**6, linewidth=3)
 plt.xlabel("Time [s]", fontsize=17)
 plt.ylabel("Volume of Water [mL]", fontsize=17)
 plt.legend(("Propellant Tank", "Collection Chamber"), fontsize=15)
@@ -265,9 +266,9 @@ plt.title("Volumes of Collection Chamber and Propellant Tank", fontsize=22)
 
 # Temperature in Prop Tank
 plt.figure(2)
-plt.plot(time_array, tankTempGas_array, linewidth=3)
+plt.plot(time_array[:count], tankTempGas_array[:count], linewidth=3)
 #hold on
-plt.plot(time_array,tankTempLiquid_array, linewidth=3)
+plt.plot(time_array[:count],tankTempLiquid_array[:count], linewidth=3)
 plt.xlabel("Time [s]", fontsize=17)
 plt.ylabel("Temperature [K]", fontsize=17)
 plt.legend(("Gas (Air + HFE Vapor)", "Liquid HFE"), fontsize=15)
@@ -275,9 +276,9 @@ plt.title("Temperature in Propellant Tank", fontsize=22)
 
 # Temperature in CC
 plt.figure(3)
-plt.plot(time_array, CCTempGas_array, linewidth=3)
+plt.plot(time_array[:count], CCTempGas_array[:count], linewidth=3)
 #hold on
-plt.plot(time_array, CCTempLiquid_array, linewidth=3)
+plt.plot(time_array[:count], CCTempLiquid_array[:count], linewidth=3)
 plt.legend(("Water Vapor", "Liquid Water"), fontsize=15)
 plt.title("Temperature in Collection Chamber", fontsize=22)
 plt.xlabel("Time [s]", fontsize=17)
@@ -285,9 +286,9 @@ plt.ylabel("Temperature [K]", fontsize=17)
 
 # Pressure in Prop Tank
 plt.figure(4)
-plt.plot(time_array, tankPress_array/1000, linewidth=3)
+plt.plot(time_array[:count], tankPress_array[:count]/1000, linewidth=3)
 #hold on
-plt.plot(time_array,PvapHFE_array/1000, linewidth=3)
+plt.plot(time_array[:count],PvapHFE_array[:count]/1000, linewidth=3)
 plt.xlabel("Time [s]", fontsize=17)
 plt.ylabel("Pressure [kPa]", fontsize=17)
 plt.legend(("Propellant Tank Pressure", "Vapor Pressure of HFE"), fontsize=15)
@@ -295,9 +296,9 @@ plt.title("Pressures in Propellant Tank", fontsize=22)
 
 # Pressures in CC
 plt.figure(5)
-plt.plot(time_array, CCPress_array/1000, linewidth=3)
+plt.plot(time_array[:count], CCPress_array[:count]/1000, linewidth=3)
 #hold on
-plt.plot(time_array, PvapWater_array/1000, linewidth=3)
+plt.plot(time_array[:count], PvapWater_array[:count]/1000, linewidth=3)
 plt.xlabel("Time [s]", fontsize=17)
 plt.ylabel("Pressure [kPa]", fontsize=17)
 plt.legend(("Collection Chamber Pressure", "Vapor Pressure of Water"), fontsize=15)
@@ -305,10 +306,10 @@ plt.title("Pressures in Collection Chamber", fontsize=22)
 
 # Mass of HFE in All States
 plt.figure(6)
-plt.plot(time_array, m_HFE_vapor_array*1000, linewidth=2)
+plt.plot(time_array[:count], m_HFE_vapor_array[:count]*1000, linewidth=2)
 #hold on
-plt.plot(time_array, m_HFE_liquid_array*1000, linewidth=2)
-plt.plot(time_array, m_HFE_total_array*1000, linewidth=2)
+plt.plot(time_array[:count], m_HFE_liquid_array[:count]*1000, linewidth=2)
+plt.plot(time_array[:count], m_HFE_total_array[:count]*1000, linewidth=2)
 plt.xlabel("Time [s]", fontsize=17)
 plt.ylabel("Mass of HFE [g]", fontsize=17)
 plt.title("Amount of HFE in Each State", fontsize=22)
@@ -316,11 +317,11 @@ plt.legend(("HFE Vapor", "HFE Liquid", "HFE Total"), fontsize=15)
 
 # Mass of Water in All States
 plt.figure(7)
-plt.plot(time_array, m_water_vapor_array*1000, linewidth=2)
+plt.plot(time_array[:count], m_water_vapor_array[:count]*1000, linewidth=2)
 #hold on
-plt.plot(time_array, m_water_liquid_array*1000, linewidth=2)
-plt.plot(time_array, m_water_total_array*1000, linewidth=2)
-plt.plot(time_array, tankVolWater_array*rho_water*1000, linewidth=2)
+plt.plot(time_array[:count], m_water_liquid_array[:count]*1000, linewidth=2)
+plt.plot(time_array[:count], m_water_total_array[:count]*1000, linewidth=2)
+plt.plot(time_array[:count], tankVolWater_array[:count]*rho_water*1000, linewidth=2)
 plt.xlabel("Time [s]", fontsize=17)
 plt.ylabel("Mass of Water [g]", fontsize=17)
 plt.title("Amount of Water in Each State", fontsize=22)
@@ -328,7 +329,7 @@ plt.legend(("Water Vapor", "Water Liquid", "Water Total", "Water in One Prop Tan
 
 # Altitude vs Time
 plt.figure(8)
-plt.plot(time_array, altitude_array, linewidth=2)
+plt.plot(time_array[:count], altitude_array[:count], linewidth=2)
 plt.xlabel("Time [s]", fontsize=17)
 plt.ylabel("Altitude [m]", fontsize=17)
 plt.title("Flight Altitude", fontsize=22)
