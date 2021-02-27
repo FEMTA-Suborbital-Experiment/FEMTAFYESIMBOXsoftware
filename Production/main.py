@@ -21,7 +21,7 @@ from uv_conversion import uv_conversion, make_fake_uv
 from add_noise import fuzz
 from condition_functions import poll_valve_states, get_flight_conditions
 from Simulation.sim import run as run_sim
-from serial_interface import StartSerialForwarding
+from serial_interface import ArduinoI2CSimInterface #, StartSerialForwarding
 
 # Define Serial port info
 ARDUINO_PORT = "/dev/ttyACM0"
@@ -70,29 +70,31 @@ def waitForI2CBusLock(timeout=1.0):
     print("\nI2C lock obtained")
 
 # Set up Arduino
-# 0s timeout means read is non-blocking and returns buffered bytes immediately,
-# None timeout means wait until requested bytes or terminator character received
-arduino = serial.Serial(baudrate=SERIAL_BAUD, timeout=None)
-arduino.port = ARDUINO_PORT # Specifying port here (not in constructor) prevents port from opening until ready
+digital_sensor_interface = ArduinoI2CSimInterface(port=ARDUINO_PORT, baudrate=SERIAL_BAUD)
 
-# Function to wait for Arduino on serial port to wake up
-"""
-The Arduino performs a reset whenever a new connection to the serial port is established. It
-takes a few seconds for it to complete this, at which point the first thing it does is send
-a message down the port signaling that it is ready. This should be run after establishing the
-serial port and before any other operations involving the Arduino.
-"""
-def waitForArduinoReady(timeout=5.0):
-    print("Waiting for Arduino on serial port", end='')
-    arduino.flush()
-    t_start = datetime.now()
-    t_delta = timedelta(seconds=timeout)
-    while arduino.in_waiting == 0:
-        if datetime.now() - t_start > t_delta:
-            raise RuntimeError("Waiting for Arduino over serial port timed out")
-        print(".", end='')
-        sleep(0.5) # Don't hog the processor busywaiting
-    print("\nArduino has signaled ready")
+# # 0s timeout means read is non-blocking and returns buffered bytes immediately,
+# # None timeout means wait until requested bytes or terminator character received
+# arduino = serial.Serial(baudrate=SERIAL_BAUD, timeout=None)
+# arduino.port = ARDUINO_PORT # Specifying port here (not in constructor) prevents port from opening until ready
+
+# # Function to wait for Arduino on serial port to wake up
+# """
+# The Arduino performs a reset whenever a new connection to the serial port is established. It
+# takes a few seconds for it to complete this, at which point the first thing it does is send
+# a message down the port signaling that it is ready. This should be run after establishing the
+# serial port and before any other operations involving the Arduino.
+# """
+# def waitForArduinoReady(timeout=5.0):
+#     print("Waiting for Arduino on serial port", end='')
+#     arduino.flush()
+#     t_start = datetime.now()
+#     t_delta = timedelta(seconds=timeout)
+#     while arduino.in_waiting == 0:
+#         if datetime.now() - t_start > t_delta:
+#             raise RuntimeError("Waiting for Arduino over serial port timed out")
+#         print(".", end='')
+#         sleep(0.5) # Don't hog the processor busywaiting
+#     print("\nArduino has signaled ready")
 
 # Set up shared memory
 sensor_mem = sm.SharedMemory(name="sensors", create=True, size=120) #Edit with correct size
@@ -203,7 +205,7 @@ def run():
     #Output data
     i2c.writeto(DAC[0], analog_data_0)
     i2c.writeto(DAC[1], analog_data_1)
-    arduino.write(bytes(digital_data))
+    digital_sensor_interface.sendCommand(digital_data)
     
     #Valve feedback
     valve_states[:] = [GPIO.input(pin) for pin in GPIO_PINS]
@@ -216,12 +218,14 @@ def run():
 if __name__ == "__main__":
     try:
         waitForI2CBusLock(1.0)      # Wait for exclusive access to I2C port (usually instant)
-        arduino.open()              # Open serial port
-        waitForArduinoReady(5.0)    # Wait for Arduino to signal ready
+        # arduino.open()              # Open serial port
+        # waitForArduinoReady(5.0)    # Wait for Arduino to signal ready
+        digital_sensor_interface.connect()
 
-        serial_handler = mp.Process(target=StartSerialForwarding, args=(arduino,), daemon=True) # Daemon process for serial port
+        # serial_handler = mp.Process(target=StartSerialForwarding, args=(arduino,), daemon=True) # Daemon process for serial port
         venv = mp.Process(target=run_sim)
-        serial_handler.start()
+        digital_sensor_interface.start() # Start mp Process
+        # serial_handler.start()
         venv.start()
         tl.start(block=True)
         venv.join()
@@ -239,6 +243,6 @@ if __name__ == "__main__":
         sensor_mem.unlink()
 
         # Close up busses when done
-        arduino.close()
+        digital_sensor_interface.close()
         i2c.unlock()
         i2c.deinit()
