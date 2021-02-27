@@ -2,11 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 
+from numba import jit, void
+
 from constants import *
 from test_helpers import *
 
-h = np.load("matlab-python testing/Test Simulation/altitude.npy").reshape((99840,))
-t = np.load("matlab-python testing/Test Simulation/time.npy").reshape((99840,))
+h = np.load("altitude.npy").reshape((99840,))
+t = np.load("time.npy").reshape((99840,))
 
 # Variable initialization
 volWater_tank = volWater0_tank                        #Initial volume of water in one Prop Tank [m^3]
@@ -34,46 +36,51 @@ time = 0
 count = 0
 dt = 2e-4    #timestep [s] (maximum: 2e-4)
 
-# Array initialization
-tankVolWater_array = np.empty(t.shape)
-tankPress_array = np.empty(t.shape)
-tankTempGas_array = np.empty(t.shape)
-tankTempLiquid_array = np.empty(t.shape)
-CCVolWater_array = np.empty(t.shape)
-CCPress_array = np.empty(t.shape)
-CCPress_preExp_array = np.empty(t.shape)
-CCTempGas_array = np.empty(t.shape)
-CCTempLiquid_array = np.empty(t.shape)
-PvapHFE_array = np.empty(t.shape)
-PvapWater_array = np.empty(t.shape)
-QHFE_array = np.empty(t.shape)
-Qwater_array = np.empty(t.shape)
-time_array = np.empty(t.shape)
-m_HFE_transfer_array = np.empty(t.shape)
-m_HFE_vapor_array = np.empty(t.shape)
-m_HFE_liquid_array = np.empty(t.shape)
-tankVolGas_array = np.empty(t.shape)
-n_Gas_array = np.empty(t.shape)
-m_water_vapor_array = np.empty(t.shape)
-m_water_liquid_array = np.empty(t.shape)
-m_water_transfer_array = np.empty(t.shape)
-m_water_unaltered_array = np.empty(t.shape)
-h_evap_water_array = np.empty(t.shape)
-m_HFE_unaltered_array = np.empty(t.shape)
-volGas_array = np.empty(t.shape)
-nGas_array = np.empty(t.shape)
-m_HFE_total_array = np.empty(t.shape)
-m_water_total_array = np.empty(t.shape)
-m_water_liquid_tank_array = np.empty(t.shape)
-nAir_CC_array = np.empty(t.shape)
-m_water_lost_array = np.empty(t.shape)
-n_Air_lost_array = np.empty(t.shape)
-m_lost_array = np.empty(t.shape)
-nWaterVapor_CC_array = np.empty(t.shape)
-altitude_array = np.empty(t.shape)
-flo_water_array = np.empty(t.shape)
+num_samples = int((max(t) / dt) // 100)
 
-while time < max(t) and count < 99840:
+# Array initialization
+tankVolWater_array = np.empty((num_samples,))
+tankPress_array = np.empty((num_samples,))
+tankTempGas_array = np.empty((num_samples,))
+tankTempLiquid_array = np.empty((num_samples,))
+CCVolWater_array = np.empty((num_samples,))
+CCPress_array = np.empty((num_samples,))
+CCPress_preExp_array = np.empty((num_samples,))
+CCTempGas_array = np.empty((num_samples,))
+CCTempLiquid_array = np.empty((num_samples,))
+PvapHFE_array = np.empty((num_samples,))
+PvapWater_array = np.empty((num_samples,))
+QHFE_array = np.empty((num_samples,))
+Qwater_array = np.empty((num_samples,))
+time_array = np.empty((num_samples,))
+m_HFE_transfer_array = np.empty((num_samples,))
+m_HFE_vapor_array = np.empty((num_samples,))
+m_HFE_liquid_array = np.empty((num_samples,))
+tankVolGas_array = np.empty((num_samples,))
+n_Gas_array = np.empty((num_samples,))
+m_water_vapor_array = np.empty((num_samples,))
+m_water_liquid_array = np.empty((num_samples,))
+m_water_transfer_array = np.empty((num_samples,))
+m_water_unaltered_array = np.empty((num_samples,))
+h_evap_water_array = np.empty((num_samples,))
+m_HFE_unaltered_array = np.empty((num_samples,))
+volGas_array = np.empty((num_samples,))
+nGas_array = np.empty((num_samples,))
+m_HFE_total_array = np.empty((num_samples,))
+m_water_total_array = np.empty((num_samples,))
+m_water_liquid_tank_array = np.empty((num_samples,))
+nAir_CC_array = np.empty((num_samples,))
+m_water_lost_array = np.empty((num_samples,))
+n_Air_lost_array = np.empty((num_samples,))
+m_lost_array = np.empty((num_samples,))
+nWaterVapor_CC_array = np.empty((num_samples,))
+altitude_array = np.empty((num_samples,))
+flo_water_array = np.empty((num_samples,))
+
+#while time < max(t) and count < num_samples:
+
+@jit(nopython=True, parallel=True, fastmath=True)
+def loop():
     if not count % 5000: print(count)
         
     alt = np.interp(time, t, h)
@@ -209,47 +216,51 @@ while time < max(t) and count < 99840:
     m_water_total = m_water_vapor + m_water_liquid + (volWater_tank * rho_water)
 
     # -=-=- Array Update -=-=-
-    # Propellant Tank
-    tankVolWater_array[count] = volWater_tank
-    tankPress_array[count] = tankPress
-    tankTempGas_array[count] = tankTempGas
-    tankTempLiquid_array[count] = tankTempLiquid_HFE
-    tankVolGas_array[count] = volGas
-    m_HFE_vapor_array[count] = m_HFE_vapor
-    m_HFE_liquid_array[count] = m_HFE_liquid
-    n_Gas_array[count] = n_Gas
-    volGas_array[count] = volGas
-    nGas_array[count] = n_Gas
-    m_HFE_total_array[count] = m_HFE_total
-    m_water_liquid_tank_array[count] = m_water_liquid_tank
-    m_HFE_transfer_array[count] = m_HFE_transfer
+    if not count % 100:
+        # Propellant Tank
+        tankVolWater_array[count // 100] = volWater_tank
+        tankPress_array[count // 100] = tankPress
+        tankTempGas_array[count // 100] = tankTempGas
+        tankTempLiquid_array[count // 100] = tankTempLiquid_HFE
+        tankVolGas_array[count // 100] = volGas
+        m_HFE_vapor_array[count // 100] = m_HFE_vapor
+        m_HFE_liquid_array[count // 100] = m_HFE_liquid
+        n_Gas_array[count // 100] = n_Gas
+        volGas_array[count // 100] = volGas
+        nGas_array[count // 100] = n_Gas
+        m_HFE_total_array[count // 100] = m_HFE_total
+        m_water_liquid_tank_array[count // 100] = m_water_liquid_tank
+        m_HFE_transfer_array[count // 100] = m_HFE_transfer
 
-    # Collection Chamber
-    CCVolWater_array[count] = volWater_CC
-    CCPress_array[count] = CCPress
-    CCTempGas_array[count] = CCTempGas
-    CCTempLiquid_array[count] = CCTempLiquid
-    m_water_vapor_array[count] = m_water_vapor
-    m_water_liquid_array[count] = m_water_liquid
-    m_water_transfer_array[count] = m_water_transfer
-    h_evap_water_array[count] = h_evap_water
-    m_water_total_array[count] = m_water_total
-    nAir_CC_array[count] = nAir_CC
-    m_water_lost_array[count] = m_water_lost
-    n_Air_lost_array[count] = n_Air_lost
-    m_lost_array[count] = m_lost
-    nWaterVapor_CC_array[count] = nWaterVapor_CC
+        # Collection Chamber
+        CCVolWater_array[count // 100] = volWater_CC
+        CCPress_array[count // 100] = CCPress
+        CCTempGas_array[count // 100] = CCTempGas
+        CCTempLiquid_array[count // 100] = CCTempLiquid
+        m_water_vapor_array[count // 100] = m_water_vapor
+        m_water_liquid_array[count // 100] = m_water_liquid
+        m_water_transfer_array[count // 100] = m_water_transfer
+        h_evap_water_array[count // 100] = h_evap_water
+        m_water_total_array[count // 100] = m_water_total
+        nAir_CC_array[count // 100] = nAir_CC
+        m_water_lost_array[count // 100] = m_water_lost
+        n_Air_lost_array[count // 100] = n_Air_lost
+        m_lost_array[count // 100] = m_lost
+        nWaterVapor_CC_array[count // 100] = nWaterVapor_CC
 
-    # Miscellaneous
-    PvapHFE_array[count] = Pvap_HFE
-    QHFE_array[count] = Q_HFE
-    PvapWater_array[count] = Pvap_water
-    flo_water_array[count] = flo_water
-    time_array[count] = time
-    altitude_array[count] = alt
+        # Miscellaneous
+        PvapHFE_array[count // 100] = Pvap_HFE
+        QHFE_array[count // 100] = Q_HFE
+        PvapWater_array[count // 100] = Pvap_water
+        flo_water_array[count // 100] = flo_water
+        time_array[count // 100] = time
+        altitude_array[count // 100] = alt
 
     time += dt
     count += 1
+
+while (time < max(t)) and (count < num_samples):
+    loop()
 
 
 # -=-=- PLOTS -=-=-

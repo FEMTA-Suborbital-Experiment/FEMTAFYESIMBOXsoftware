@@ -49,7 +49,7 @@ T0_CC = 300 #[K]                               Initial temperature in collection
 V_CC = 334.519e-6 #[m^3]                       Volume of CC (334.519mL) 
 ventSolenoidDiam = 2.18e-3 #[m]                Diameter of vent solenoid
 CCBeta = ventSolenoidDiam / 0.09398 #[]        Ratio of vent solenoid orifice to CC cross section
-nAir_CC = (P0_CC * V_CC) / (R * T0_CC) #[mol]  Initial number of moles of air in CC
+nAir_CC_0 = (P0_CC * V_CC) / (R * T0_CC) #[mol]  Initial number of moles of air in CC
 
 #Piping network
 D_pipe = (1/8) / 39.37 #[m]        Pipe diameter
