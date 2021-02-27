@@ -7,32 +7,30 @@ from constants import *
 from test_helpers import *
 
 
-@njit((float64[:], float64[:]), fastmath=True, cache=True) #parallel=True,
+@njit((float64[:], float64[:]), fastmath=True, cache=True) #parallel=True
 def main(h, t):
-   
-
     # Variable initialization
-    volWater_tank = volWater0_tank                        #Initial volume of water in one Prop Tank [m^3]
+    volWater_tank = VolWater0_tank                        #Initial volume of water in one Prop Tank [m^3]
     volWater_CC = 0                                       #Initial volume of water in Collection Chamber [m^3]
-    #volHFE_liquid = volHFE_liquid0_tank                   #Volume of HFE liquid in Prop Tank [m^3]
+    #volHFE_liquid = VolHFE_liquid0_tank                   #Volume of HFE liquid in Prop Tank [m^3]
     tankPress = P0_tank                                   #Pressure in Prop Tank [Pa]
-    CCPress = P0_CC                                       #Pressure in Collection Chamber [Pa]
+    cCPress = P0_CC                                       #Pressure in Collection Chamber [Pa]
     tankTempGas = T0_tank                                 #Temperature of gas in Prop Tank [K]
     tankTempLiquid_HFE = T0_tank                          #Temperature of HFE Liquid in Prop Tank [K]
-    CCTempGas = T0_CC                                     #Temperature of gas in CC [K]
-    CCTempLiquid = T0_CC                                  #Temperature of water liquid in CC [K]
+    cCTempGas = T0_CC                                     #Temperature of gas in CC [K]
+    cCTempLiquid = T0_CC                                  #Temperature of water liquid in CC [K]
     m_HFE_vapor = 0                                       #Initial mass of HFE vapor in prop tank
-    m_HFE_liquid = volHFE_liquid0_tank * nvcRho(T0_tank)  #Initial mass of HFE liquid in prop tank
+    m_HFE_liquid = VolHFE_liquid0_tank * nvcRho(T0_tank)  #Initial mass of HFE liquid in prop tank
     m_water_vapor = 0                                     #Initial mass of water vapor in CC
     m_water_liquid = 0                                    #Initial mass of water liquid in CC
-    n_Gas = nAir_tank                                     #Initial moles of gas in tank
+    n_Gas = N_Air_tank                                    #Initial moles of gas in tank
     n_HFE_vapor = 0                                       #Initial moles of HFE vapor in tank
-    volGas = volAir0                                      #Initial volume of gas in tank [m^3]
+    volGas = VolAir0                                      #Initial volume of gas in tank [m^3]
     volWater_shut = 0                                     #Initial volume of water in prop tank when valve shuts [m^3]
     #n_air_lost = 0
-    A_HFE_cond = A_HFE
-    A_HFE_evap = A_HFE
-    nAir_CC = nAir_CC_0
+    a_HFE_cond = A_HFE
+    a_HFE_evap = A_HFE
+    nAir_CC = N_Air_CC_0
 
     time = 0
     count = 0
@@ -104,20 +102,20 @@ def main(h, t):
             volWater_shut = 0
 
         # Volumetric Flow Rate of Liquid Water Propellant through one orifice [m^3/s]
-        flo_water = flowSol * CD_orifice * A_O * np.sqrt(2 * np.abs(tankPress - CCPress) / (rho_water * (1 - Beta**4)))
-        if tankPress < CCPress:
+        flo_water = flowSol * CD_orifice * A_O * np.sqrt(2 * np.abs(tankPress - cCPress) / (Rho_water * (1 - Beta**4)))
+        if tankPress < cCPress:
             flo_water *= -1
 
         # Update of Liquid Water Propellant Volumes in Tank & CC [m^3]
         volWater_tank -= flo_water * dt
         volWater_CC += flo_water * dt
-        #m_water_liquid_tank = volWater_tank * rho_water
+        #m_water_liquid_tank = volWater_tank * Rho_water
 
         # -=-=- PROPELLANT TANK -=-=-
         # Mass of Gas in the tank [kg]
-        mAir_tank = (nAir_tank * MW_Air) / 1000
-        xAir2_tank = nAir_tank / (nAir_tank + n_HFE_vapor)
-        xHFEvapor2_tank = n_HFE_vapor / (nAir_tank + n_HFE_vapor)
+        mAir_tank = (N_Air_tank * MW_Air) / 1000
+        xAir2_tank = N_Air_tank / (N_Air_tank + n_HFE_vapor)
+        xHFEvapor2_tank = n_HFE_vapor / (N_Air_tank + n_HFE_vapor)
         yAir2_tank = mAir_tank / (mAir_tank + m_HFE_vapor)
         yHFEvapor2_tank = m_HFE_vapor / (mAir_tank + m_HFE_vapor)
         MWGas2_tank = (MW_Air * xAir2_tank) + (MW_HFE * xHFEvapor2_tank)
@@ -137,11 +135,11 @@ def main(h, t):
 
         # Amount of HFE either condensing or evaporating [kg]
         if m_HFE_liquid == 0:
-            A_HFE_evap = 0
+            a_HFE_evap = 0
         elif m_HFE_vapor == 0:
-            A_HFE_cond = 0
+            a_HFE_cond = 0
 
-        m_HFE_transfer = HerKnu(Pvap_HFE, tankTempLiquid_HFE, tankTempGas, tankPress, m_HFE, A_HFE_evap, A_HFE_cond, Ce_HFE, Cc_HFE) * dt
+        m_HFE_transfer = HerKnu(Pvap_HFE, tankTempLiquid_HFE, tankTempGas, tankPress, M_HFE, a_HFE_evap, a_HFE_cond, Ce_HFE, Cc_HFE) * dt
         if tankPress > Pvap_HFE and m_HFE_transfer > 0:
             m_HFE_transfer = 0
             
@@ -157,11 +155,11 @@ def main(h, t):
         tankTempGas = ((m_HFE_transfer * Cp_HFEliquid * tankTempLiquid_HFE) + (mGas2_tank * CpGas2_tank * tankTempGas)) / ((Cp_HFEliquid * m_HFE_transfer) + (mGas2_tank * CpGas2_tank))
 
         # Update total amount of Gas (Air + HFE)
-        n_Gas = n_HFE_vapor + nAir_tank
+        n_Gas = n_HFE_vapor + N_Air_tank
         volGas = V_tank - volWater_tank - vol_HFE_liquid
 
         # Temperatrue Update [K]
-        Q_HFE = m_HFE_transfer * h_evap_HFE
+        Q_HFE = m_HFE_transfer * H_evap_HFE
         tankTempLiquid_HFE += (-Q_HFE / (m_HFE_liquid * Cp_HFEliquid))
 
         # Check total mass of HFE in Prop Tank [kg]
@@ -173,23 +171,23 @@ def main(h, t):
         A_water = 4 * pi * r * r
 
         # Vapor Pressure of Water [Pa]
-        Pvap_water = waterVP(CCTempLiquid)
+        Pvap_water = waterVP(cCTempLiquid)
 
         # Evaporation Heat of Water [kJ/kg]
-        h_evap_water = waterHV(CCTempLiquid) / 1000
+        h_evap_water = waterHV(cCTempLiquid) / 1000
 
         # Mass of water either evaporating or condensing at current timestep [kg]
-        m_water_transfer = HerKnu(Pvap_water, CCTempLiquid, CCTempGas, CCPress, m_H2O, A_water, A_water, Ce_water, Cc_water) * dt
-        if CCPress > Pvap_water and m_water_transfer > 0:
+        m_water_transfer = HerKnu(Pvap_water, cCTempLiquid, cCTempGas, cCPress, M_H2O, A_water, A_water, Ce_water, Cc_water) * dt
+        if cCPress > Pvap_water and m_water_transfer > 0:
             m_water_transfer = 0
             
         # Mass of gas lost through vent solenoid [kg]
         nWaterVapor_CC = (m_water_vapor * 1000) / MW_Water
-        rhoGas_CC = (((nAir_CC * MW_Air) / 1000) + ((nWaterVapor_CC * MW_Water) / 1000)) / (V_CC - (m_water_liquid / rho_water))
+        rhoGas_CC = (((nAir_CC * MW_Air) / 1000) + ((nWaterVapor_CC * MW_Water) / 1000)) / (V_CC - (m_water_liquid / Rho_water))
         xAir_CC = nAir_CC / (nAir_CC + nWaterVapor_CC)
         xWaterVapor_CC = nWaterVapor_CC / (nWaterVapor_CC + nAir_CC)
-        gammaGas_CC = 1 + (1 / ((xWaterVapor_CC / (gammaWV - 1)) + (xAir_CC / (gammaAir - 1))))
-        m_lost = mDotThruOrifice(CCPress, ambientP, rhoGas_CC, gammaGas_CC, 0.1, ventSolenoidDiam * ventSol) * dt
+        gammaGas_CC = 1 + (1 / ((xWaterVapor_CC / (GammaWV - 1)) + (xAir_CC / (GammaAir - 1))))
+        m_lost = mDotThruOrifice(cCPress, ambientP, rhoGas_CC, gammaGas_CC, 0.1, VentSolenoidDiam * ventSol) * dt
         m_water_lost = m_lost * xWaterVapor_CC
         n_Air_lost = ((m_lost * 1000) * xAir_CC) / MW_Air
             
@@ -198,22 +196,22 @@ def main(h, t):
 
         # Total mass of water vapor and liquid at current time [kg]
         m_water_vapor = m_water_transfer - m_water_lost + m_water_vapor
-        m_water_liquid = (volWater_CC * rho_water) - m_water_vapor
+        m_water_liquid = (volWater_CC * Rho_water) - m_water_vapor
 
         # Pressure Update [Pa]
-        CCPress = ((nAir_CC + nWaterVapor_CC) * R * CCTempGas) / (V_CC - (m_water_liquid / rho_water))
+        cCPress = ((nAir_CC + nWaterVapor_CC) * R * cCTempGas) / (V_CC - (m_water_liquid / Rho_water))
             
         # Liquid Temperature Update [K]
         if m_water_liquid != 0:
             Q_water = m_water_transfer * h_evap_water
-            mwn = flo_water * rho_water * dt
-            T1 = ((m_water_liquid - mwn) / m_water_liquid) * CCTempLiquid
+            mwn = flo_water * Rho_water * dt
+            T1 = ((m_water_liquid - mwn) / m_water_liquid) * cCTempLiquid
             T2 = (mwn / m_water_liquid) * 300
             T3 = -Q_water / (m_water_liquid * Cp_water_liquid)
-            CCTempLiquid = T1 + T2 + T3
+            cCTempLiquid = T1 + T2 + T3
 
         # Update total mass of water in the system [kg]
-        m_water_total = m_water_vapor + m_water_liquid + (volWater_tank * rho_water)
+        m_water_total = m_water_vapor + m_water_liquid + (volWater_tank * Rho_water)
 
         # -=-=- Array Update -=-=-
         if not count % 100:
@@ -234,9 +232,9 @@ def main(h, t):
 
             # Collection Chamber
             CCVolWater_array[count // 100] = volWater_CC
-            CCPress_array[count // 100] = CCPress
-            CCTempGas_array[count // 100] = CCTempGas
-            CCTempLiquid_array[count // 100] = CCTempLiquid
+            CCPress_array[count // 100] = cCPress
+            CCTempGas_array[count // 100] = cCTempGas
+            CCTempLiquid_array[count // 100] = cCTempLiquid
             m_water_vapor_array[count // 100] = m_water_vapor
             m_water_liquid_array[count // 100] = m_water_liquid
             #m_water_transfer_array[count // 100] = m_water_transfer
@@ -259,7 +257,7 @@ def main(h, t):
         count += 1
         time += dt
         
-    print(time, count)
+    print(time, count, time_array[-20:], altitude_array[-20:])
     return (count, time_array, tankVolWater_array, CCVolWater_array, tankTempGas_array, 
     tankTempLiquid_array, CCTempGas_array, CCTempLiquid_array, tankPress_array, 
     PvapHFE_array, CCPress_array, PvapWater_array, m_HFE_vapor_array, m_HFE_liquid_array, 
@@ -346,7 +344,7 @@ if __name__ == "__main__":
     #hold on
     plt.plot(time_array[:count], m_water_liquid_array[:count]*1000, linewidth=2)
     plt.plot(time_array[:count], m_water_total_array[:count]*1000, linewidth=2)
-    plt.plot(time_array[:count], tankVolWater_array[:count]*rho_water*1000, linewidth=2)
+    plt.plot(time_array[:count], tankVolWater_array[:count]*Rho_water*1000, linewidth=2)
     plt.xlabel("Time [s]", fontsize=17)
     plt.ylabel("Mass of Water [g]", fontsize=17)
     plt.title("Amount of Water in Each State", fontsize=22)
