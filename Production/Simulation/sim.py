@@ -2,9 +2,8 @@
 
 import numpy as np
 import multiprocessing.shared_memory as sm
-from numba import jit, void
 
-import numba
+from numba import jit, void
 
 from constants import *
 from helpers import nvcVP, nvcRho, waterVP, HerKnu, waterHV, mDotThruOrifice, StandardAtm

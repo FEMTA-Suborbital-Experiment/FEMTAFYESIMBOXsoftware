@@ -1,7 +1,7 @@
 # Set of functions called from sim.py
 
 import numpy as np
-from numba import jit, float32, guvectorize
+from numba import jit, float32
 from constants import *
 
 
@@ -33,14 +33,14 @@ def waterVP(T):
 # Mass transfer from gas to liquid [kg/s] (HERTZ-KNUDSEN EQUATION)
 # Negative denotes vapor to liquid (condensation), Positive denotes liquid to vapor
 # (evaporation)
-@jit(float32(float32, float32, float32, float32, float32, float32, float32, float32, float32), fastmath=True, nopython=True)
+@jit(float32(float32, float32, float32, float32, float32, float32, float32, float32, float32), fastmath=toggle_fastmath, nopython=True)
 def HerKnu(Ps, T_liquid, T_vapor, Pg, m, A_evap, A_cond, C_evap, C_cond):
     m_transfer = np.sqrt(m / (2 * pi * kB)) * ((A_evap * C_evap * (Ps / np.sqrt(T_liquid))) - (A_cond * C_cond * (Pg / np.sqrt(T_vapor))))
     return m_transfer
 
 
 # Heat of Vaporization of Water [J/kg]
-@jit(float32(float32), nopython=True)
+@jit(float32(float32), fastmath=toggle_fastmath, nopython=True)
 def waterHV(T):
     Hvs = np.array([2500.9, 2496.2, 2491.4, 2477.2, 2467.7, 2458.3, 2453.5, 2441.7, 2429.8, 2420.3, 2406, 2396.4, 2381.9, 2372.3, 2357.7, 2333, 2308, 2282.5, 2266.9, 2256.4, 2229.6, 2202.1, 2144.3, 2082, 2014.2, 1939.7, 1857.4, 1765.4, 1661.6, 1543, 1404.6, 1238.4, 1027.3, 719.8])
     Ts = 273 + np.array([0.00, 2, 4, 10, 14, 18, 20, 25, 30, 34, 40, 44, 50, 54, 60, 70, 80, 90, 96, 100, 110, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360])

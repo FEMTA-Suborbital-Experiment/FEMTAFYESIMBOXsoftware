@@ -8,7 +8,7 @@ import multiprocessing.shared_memory as sm
 #import socket
 
 import numpy as np
-from numba import jit, float32
+from numba import jit
 import serial
 import busio
 import RPi.GPIO as GPIO
