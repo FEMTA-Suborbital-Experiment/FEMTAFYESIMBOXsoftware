@@ -190,7 +190,7 @@ def run():
     valve_states[:] = [GPIO.input(pin) for pin in GPIO_PINS]
 
     # Set Conditions
-    sim_cond = poll_valve_states(valve_states)
+    sim_cond, flowSol, ventSol = poll_valve_states(valve_states)
     flight_cond = get_flight_conditions(start_t, times)
     altitude = np.interp(now() - start_t, t, h)
     
