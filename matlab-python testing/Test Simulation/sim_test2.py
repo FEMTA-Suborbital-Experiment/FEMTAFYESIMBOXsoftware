@@ -36,52 +36,52 @@ def main(h, t):
     count = 0
     dt = 2e-4    #timestep [s] (maximum: 2e-4)
 
-    num_samples = int((max(t) / dt) // 100)
+    num_samples = int((max(t) / dt) / 100)
 
     # Array initialization
-    tankVolWater_array = np.empty((num_samples,))
-    tankPress_array = np.empty((num_samples,))
-    tankTempGas_array = np.empty((num_samples,))
-    tankTempLiquid_array = np.empty((num_samples,))
-    CCVolWater_array = np.empty((num_samples,))
-    CCPress_array = np.empty((num_samples,))
-    #CCPress_preExp_array = np.empty((num_samples,))
-    CCTempGas_array = np.empty((num_samples,))
-    CCTempLiquid_array = np.empty((num_samples,))
-    PvapHFE_array = np.empty((num_samples,))
-    PvapWater_array = np.empty((num_samples,))
-    #QHFE_array = np.empty((num_samples,))
-    #Qwater_array = np.empty((num_samples,))
-    time_array = np.empty((num_samples,))
-    #m_HFE_transfer_array = np.empty((num_samples,))
-    m_HFE_vapor_array = np.empty((num_samples,))
-    m_HFE_liquid_array = np.empty((num_samples,))
-    #tankVolGas_array = np.empty((num_samples,))
-    #n_Gas_array = np.empty((num_samples,))
-    m_water_vapor_array = np.empty((num_samples,))
-    m_water_liquid_array = np.empty((num_samples,))
-    #m_water_transfer_array = np.empty((num_samples,))
-    #m_water_unaltered_array = np.empty((num_samples,))
-    #h_evap_water_array = np.empty((num_samples,))
-    #m_HFE_unaltered_array = np.empty((num_samples,))
-    #volGas_array = np.empty((num_samples,))
-    #nGas_array = np.empty((num_samples,))
-    m_HFE_total_array = np.empty((num_samples,))
-    m_water_total_array = np.empty((num_samples,))
-    #m_water_liquid_tank_array = np.empty((num_samples,))
-    nAir_CC_array = np.empty((num_samples,))
-    m_water_lost_array = np.empty((num_samples,))
-    #n_Air_lost_array = np.empty((num_samples,))
-    m_lost_array = np.empty((num_samples,))
-    #nWaterVapor_CC_array = np.empty((num_samples,))
-    altitude_array = np.empty((num_samples,))
-    #flo_water_array = np.empty((num_samples,))
+    tankVolWater_array = np.full((num_samples,), np.nan)
+    tankPress_array = np.full((num_samples,), np.nan)
+    tankTempGas_array = np.full((num_samples,), np.nan)
+    tankTempLiquid_array = np.full((num_samples,), np.nan)
+    CCVolWater_array = np.full((num_samples,), np.nan)
+    CCPress_array = np.full((num_samples,), np.nan)
+    #CCPress_preExp_array = np.full((num_samples,), np.nan)
+    CCTempGas_array = np.full((num_samples,), np.nan)
+    CCTempLiquid_array = np.full((num_samples,), np.nan)
+    PvapHFE_array = np.full((num_samples,), np.nan)
+    PvapWater_array = np.full((num_samples,), np.nan)
+    #QHFE_array = np.full((num_samples,), np.nan)
+    #Qwater_array = np.full((num_samples,), np.nan)
+    time_array = np.full((num_samples,), np.nan)
+    #m_HFE_transfer_array = np.full((num_samples,), np.nan)
+    m_HFE_vapor_array = np.full((num_samples,), np.nan)
+    m_HFE_liquid_array = np.full((num_samples,), np.nan)
+    #tankVolGas_array = np.full((num_samples,), np.nan)
+    #n_Gas_array = np.full((num_samples,), np.nan)
+    m_water_vapor_array = np.full((num_samples,), np.nan)
+    m_water_liquid_array = np.full((num_samples,), np.nan)
+    #m_water_transfer_array = np.full((num_samples,), np.nan)
+    #m_water_unaltered_array = np.full((num_samples,), np.nan)
+    #h_evap_water_array = np.full((num_samples,), np.nan)
+    #m_HFE_unaltered_array = np.full((num_samples,), np.nan)
+    #volGas_array = np.full((num_samples,), np.nan)
+    #nGas_array = np.full((num_samples,), np.nan)
+    m_HFE_total_array = np.full((num_samples,), np.nan)
+    m_water_total_array = np.full((num_samples,), np.nan)
+    #m_water_liquid_tank_array = np.full((num_samples,), np.nan)
+    nAir_CC_array = np.full((num_samples,), np.nan)
+    m_water_lost_array = np.full((num_samples,), np.nan)
+    #n_Air_lost_array = np.full((num_samples,), np.nan)
+    m_lost_array = np.full((num_samples,), np.nan)
+    #nWaterVapor_CC_array = np.full((num_samples,), np.nan)
+    altitude_array = np.full((num_samples,), np.nan)
+    #flo_water_array = np.full((num_samples,), np.nan)
 
     
     while (time < max(t)) and (count//100 < num_samples):
-        if not count % 5000: print(count)
+        if not count % 10000: print(time, count)
             
-        alt = np.interp(time, t, h)
+        alt = np.interp(round(time), t, h)
         ambientP = StandardAtm(alt)
         
         if volWater_tank - volWater_shut < 0:
@@ -256,8 +256,7 @@ def main(h, t):
 
         count += 1
         time += dt
-        
-    print(time, count, time_array[-20:], altitude_array[-20:])
+
     return (count, time_array, tankVolWater_array, CCVolWater_array, tankTempGas_array, 
     tankTempLiquid_array, CCTempGas_array, CCTempLiquid_array, tankPress_array, 
     PvapHFE_array, CCPress_array, PvapWater_array, m_HFE_vapor_array, m_HFE_liquid_array, 
@@ -266,9 +265,8 @@ def main(h, t):
 
 
 if __name__ == "__main__":
-    h = np.load("altitude.npy").reshape((99840,))
-    t = np.load("time.npy").reshape((99840,))
-    
+    h = np.load("altitude.npy")
+    t = np.load("time.npy")
     
     (count, time_array, tankVolWater_array, CCVolWater_array, tankTempGas_array, 
     tankTempLiquid_array, CCTempGas_array, CCTempLiquid_array, tankPress_array, 
