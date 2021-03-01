@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 now = datetime.now
 import multiprocessing as mp
 import multiprocessing.shared_memory as sm
-#import socket
+#import socket #for BO flight events over Ethernet, eventually
 
 import numpy as np
 from numba import jit
@@ -203,7 +203,7 @@ if __name__ == "__main__":
         digital_sensor_interface.connect()
 
         # serial_handler = mp.Process(target=StartSerialForwarding, args=(arduino,), daemon=True) # Daemon process for serial port
-        venv = mp.Process(target=run_sim)
+        venv = mp.Process(target=run_sim, kwargs={"main_freq": 1/(configs["freqency"])})
         digital_sensor_interface.start() # Start mp Process
         # serial_handler.start()
         venv.start()

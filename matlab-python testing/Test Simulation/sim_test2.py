@@ -7,7 +7,7 @@ from constants import *
 from test_helpers import *
 
 
-@njit((float64[:], float64[:]), fastmath=True, cache=True) #parallel=True
+@njit((float64[:], float64[:]), fastmath=True, cache=True)
 def main(h, t):
     # Variable initialization
     volWater_tank = VolWater0_tank                        #Initial volume of water in one Prop Tank [m^3]
@@ -78,10 +78,10 @@ def main(h, t):
     #flo_water_array = np.full((num_samples,), np.nan)
 
     
-    while (time < max(t)) and (count//100 < num_samples):
-        if not count % 10000: print(time, count)
+    while (time < max(t)) and (count // 100 < num_samples):
+        if not count % 10000: print(round(time), count)
             
-        alt = np.interp(round(time), t, h)
+        alt = np.interp(time, t, h)
         ambientP = StandardAtm(alt)
         
         if volWater_tank - volWater_shut < 0:
@@ -158,7 +158,7 @@ def main(h, t):
         n_Gas = n_HFE_vapor + N_Air_tank
         volGas = V_tank - volWater_tank - vol_HFE_liquid
 
-        # Temperatrue Update [K]
+        # Temperature Update [K]
         Q_HFE = m_HFE_transfer * H_evap_HFE
         tankTempLiquid_HFE += (-Q_HFE / (m_HFE_liquid * Cp_HFEliquid))
 

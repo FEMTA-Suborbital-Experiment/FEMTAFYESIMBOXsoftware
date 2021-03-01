@@ -12,4 +12,4 @@ numba 0.52
 
 #I think that's it?
 
-#venv progress: need numba and busio, plus timeloop modification
+#venv progress: need numba and busio. Timeloop unpdated but not working?
