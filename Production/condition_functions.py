@@ -11,21 +11,24 @@ now = datetime.now
 
 
 # valve_states is a boolean six-element list
-# if none of the valve states are open or
-# the flow solenoid is open (undefined), return 0 (false)
-@jit(uint8(boolean[:]))
+# flow_solenoid is an integer representing number of flow solenoids open
+# vent solenoid is a boolean representing an open (1) or closed (0) vent solenoid
+@jit([uint8(boolean[:]), uint8, uint8])
 def poll_valve_states(valve_states):
     sim_condition = 0
 
-    if valve_states[0] and valve_states[1] and valve_states[2]:
+    flow_solenoid = valve_states[0] + valve_states[1]
+    vent_solenoid = valve_states[2]
+
+    if flow_solenoid > 1 and vent_solenoid:
         sim_condition = 3
-    elif valve_states[0] and valve_states[1]:
-        sim_condition = 1
-    elif (valve_states[1] and valve_states[2]) or (valve_states[0] and valve_states[2]):
+    elif flow_solenoid and vent_solenoid:
         sim_condition = 4
-    elif valve_states[0] or valve_states[1]:
+    elif flow_solenoid > 1:
+        sim_condition = 1
+    elif flow_solenoid:
         sim_condition = 2
-    return sim_condition
+    return sim_condition, flow_solenoid, vent_solenoid
 
 
 # time is a datetime object that represents the past
