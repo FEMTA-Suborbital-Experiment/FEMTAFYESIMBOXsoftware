@@ -77,25 +77,6 @@ digital_sensor_interface = ArduinoI2CSimInterface(port=ARDUINO_PORT, baudrate=SE
 # arduino = serial.Serial(baudrate=SERIAL_BAUD, timeout=None)
 # arduino.port = ARDUINO_PORT # Specifying port here (not in constructor) prevents port from opening until ready
 
-# # Function to wait for Arduino on serial port to wake up
-# """
-# The Arduino performs a reset whenever a new connection to the serial port is established. It
-# takes a few seconds for it to complete this, at which point the first thing it does is send
-# a message down the port signaling that it is ready. This should be run after establishing the
-# serial port and before any other operations involving the Arduino.
-# """
-# def waitForArduinoReady(timeout=5.0):
-#     print("Waiting for Arduino on serial port", end='')
-#     arduino.flush()
-#     t_start = datetime.now()
-#     t_delta = timedelta(seconds=timeout)
-#     while arduino.in_waiting == 0:
-#         if datetime.now() - t_start > t_delta:
-#             raise RuntimeError("Waiting for Arduino over serial port timed out")
-#         print(".", end='')
-#         sleep(0.5) # Don't hog the processor busywaiting
-#     print("\nArduino has signaled ready")
-
 # Set up shared memory
 sensor_mem = sm.SharedMemory(name="sensors", create=True, size=120) #Edit with correct size
 valve_mem = sm.SharedMemory(name="valves", create=True, size=6)
@@ -142,8 +123,6 @@ def run():
     if not start_t:
         GPIO.output(GRN, GPIO.HIGH)
         start_t = now()
-
-    altitude = np.interp(now() - start_t, t, h)
 
     # Determine new sensor failures
     for period in configs["dig_error_states"]:
@@ -213,6 +192,7 @@ def run():
     # Set Conditions
     sim_cond = poll_valve_states(valve_states)
     flight_cond = get_flight_conditions(start_t, times)
+    altitude = np.interp(now() - start_t, t, h)
     
     
 if __name__ == "__main__":
