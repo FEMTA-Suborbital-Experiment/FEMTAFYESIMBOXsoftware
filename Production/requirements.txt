@@ -10,6 +10,4 @@ timeloop 1.0.2 #important: need to edit source code like this: https://github.co
 
 numba 0.52
 
-#I think that's it?
-
-#venv progress: need numba and busio. Timeloop unpdated but not working?
+#Should be all done. matplotlib is also installed for testing
