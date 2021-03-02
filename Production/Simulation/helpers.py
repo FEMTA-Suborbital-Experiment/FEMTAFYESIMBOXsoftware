@@ -35,7 +35,7 @@ def waterVP(T):
 # (evaporation)
 @jit(float32(float32, float32, float32, float32, float32, float32, float32, float32, float32), fastmath=toggle_fastmath, nopython=True)
 def HerKnu(Ps, T_liquid, T_vapor, Pg, m, A_evap, A_cond, C_evap, C_cond):
-    m_transfer = np.sqrt(m / (2 * pi * kB)) * ((A_evap * C_evap * (Ps / np.sqrt(T_liquid))) - (A_cond * C_cond * (Pg / np.sqrt(T_vapor))))
+    m_transfer = np.sqrt(m / (2 * pi * KB)) * ((A_evap * C_evap * (Ps / np.sqrt(T_liquid))) - (A_cond * C_cond * (Pg / np.sqrt(T_vapor))))
     return m_transfer
 
 
@@ -75,7 +75,7 @@ def mDotThruOrifice(in1, in2, rho, gamma, outletCD, outletDia):
         upP = in2
 
     outletArea = pi * (outletDia / 2) ** 2
-    gamma_const = np.pow(2 / (gamma + 1), gamma / (gamma - 1))
+    gamma_const = pow(2 / (gamma + 1), gamma / (gamma - 1))
     criticalP = upP * gamma_const
 
     if(downP < criticalP): #Choked
@@ -84,12 +84,12 @@ def mDotThruOrifice(in1, in2, rho, gamma, outletCD, outletDia):
     else: #Subsonic
         r = downP / upP
 
-    mDot = outletCD * outletArea * np.sqrt(upP * rho * (2 * gamma / (gamma-1)) * np.pow(r, (2 / gamma)) * (1 - np.pow(r, ((gamma - 1) / gamma)))) #kg/s
+    mDot = outletCD * outletArea * np.sqrt(upP * rho * (2 * gamma / (gamma-1)) * pow(r, (2 / gamma)) * (1 - pow(r, ((gamma - 1) / gamma)))) #kg/s
     return mDot * direction #Corrects sign on mDot to follow stated convention above
 
 @jit(float32(float32), fastmath=toggle_fastmath, nopython=True)
 def StandardAtm(h):
-    rho_sea = 1.2250     # density at sea level, kg/ m^3
+    #rho_sea = 1.2250     # density at sea level, kg/ m^3
     p_sea   = 1.01325e5  # pressure at sea level, N/m^2
     R       = 287        # gas constant, J/kg/K
     g_zero  = 9.81       # gravitational acceleration, m/s^2
@@ -98,7 +98,7 @@ def StandardAtm(h):
     h_set   = [0, 11000, 25000, 47000, 53000, 79000, 90000, 105000] #list of altitude points that define endpoints of each layer (starting at the ground), m
     a_set   = [-6.5e-3, 0, 3e-3, 0, -4.5e-3, 0, 4e-3] #list of gradient layer slopes (starting at the ground), K/m
     p_set   = [p_sea, 2.27e4, 2.5273e3, 1.2558e2, 61.493, 1.2595, 0.162723] # list of pressure at each layer endpoint, N/m^2
-    rho_set = [rho_sea, 3.648e-1, 4.0639e-2, 1.5535e-3, 7.5791e-4, 2.184e-5, 1.84114e-6] # list of density at each layer endpoint, kg/m^3
+    #rho_set = [rho_sea, 3.648e-1, 4.0639e-2, 1.5535e-3, 7.5791e-4, 2.184e-5, 1.84114e-6] # list of density at each layer endpoint, kg/m^3
             
     if h <= h_set[1]:
         layer = 0
@@ -120,12 +120,12 @@ def StandardAtm(h):
         #Gradient layer
         T = T_set[layer] + (a_set[layer] * (h - h_set[layer])) # temperature equation for gradient layer, K
         p = p_set[layer] * (pow((T / T_set[layer]), (-g_zero / (a_set[layer] * R)))) # pressure equation for gradient layer, N/m^2
-        rho = rho_set[layer] * pow((T / T_set[layer]), ((-g_zero / (a_set[layer] * R)) +1 )) # density equation for gradient layer, kg/m^3
+        #rho = rho_set[layer] * pow((T / T_set[layer]), ((-g_zero / (a_set[layer] * R)) +1 )) # density equation for gradient layer, kg/m^3
         
     else:
         #Isothermal layers
         T = T_set[layer] # temperature for isothermal layer, K
         p = p_set[layer] * np.exp((-g_zero * (h - h_set[layer])) / (R * T)) # pressure equation for isothermal layer, N/m^2
-        rho = (p * rho_set[layer]) / p_set[layer] # density equation for isothermal layer, kg/m^3
+        #rho = (p * rho_set[layer]) / p_set[layer] # density equation for isothermal layer, kg/m^3
     
     return p

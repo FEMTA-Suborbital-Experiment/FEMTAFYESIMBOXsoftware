@@ -1,5 +1,3 @@
-# Main virtual environment simulation file.
-
 import time
 import multiprocessing.shared_memory as sm
 
