@@ -13,10 +13,11 @@ from helpers import *
 @njit((float64[:], float64[:], float64, float64), fastmath=True, cache=True)
 def main(t, h, main_freq, dt=2e-4):
     # Set up shared memory
-    # sensor_mem = sm.SharedMemory(name="sensors") 
-    # valve_mem = sm.SharedMemory(name="valves")
+    # sensor_mem = sm.SharedMemory(name="sensors")
+    sim_mem = sm.SharedMemory(name="simulation")
     # sensor_data = np.ndarray(shape=(15,), dtype=np.float64, buffer=sensor_mem.buf) #Edit with correct size
-    # valve_states = np.ndarray(shape=(6,), dtype=np.bool, buffer=valve_mem.buf)
+    sim_data = np.ndarray(shape=(4,), dtype=np.float64, buffer=sim_mem.buf)
+    # sim_data: [altitude, flowSol, ventSol, (now() - start_t).total_seconds()]
 
     # Variable initialization
     volWater_tank = VolWater0_tank                        #Initial volume of water in one Prop Tank [m^3]
@@ -52,28 +53,28 @@ def main(t, h, main_freq, dt=2e-4):
             # current_time_block += main_period
             # time.sleep(current_time_block - (time.time() - start_t)) #Error will be raised if negative; means that sim is not running fast enough
 
-        alt = np.interp(sim_time, t, h) #TODO: replace by shared mem
-        ambientP = StandardAtm(alt)
-        
+        sim_data[0] = np.interp(sim_time, t, h)
+        ambientP = StandardAtm(sim_data[0])
+
         if volWater_tank - volWater_shut < 0:
             break #TODO: incorporate this into logging scheme (but the break is normal and expected)
         
-        # Condition for beginning experiment TODO: replace by shared mem
-        if alt < 80000:
-            ventSol = 1
-            flowSol = 0
+        # Condition for beginning experiment
+        if sim_data[0] < 80000:
+            sim_data[2] = 1
+            sim_data[1] = 0
         else:
-            flowSol = 1 if sim_time > 200 else 2
-            ventSol = 1
+            sim_data[1] = 1 if sim_time > 200 else 2
+            sim_data[2] = 1
         
         # Conditions for loop termination
-        if flowSol == 1 and volWater_shut == 0:
+        if sim_data[1] == 1 and volWater_shut == 0:
             volWater_shut = 0.5 * volWater_tank
-        elif flowSol == 2:
+        elif sim_data[1] == 2:
             volWater_shut = 0
 
         # Volumetric Flow Rate of Liquid Water Propellant through one orifice [m^3/s]
-        flo_water = flowSol * CD_orifice * A_O * np.sqrt(2 * abs(tankPress - cCPress) / (Rho_water * (1 - Beta**4)))
+        flo_water = sim_data[1] * CD_orifice * A_O * np.sqrt(2 * abs(tankPress - cCPress) / (Rho_water * (1 - Beta**4)))
         if tankPress < cCPress:
             flo_water *= -1
 
@@ -154,7 +155,7 @@ def main(t, h, main_freq, dt=2e-4):
         xAir_CC = nAir_CC / (nAir_CC + nWaterVapor_CC)
         xWaterVapor_CC = nWaterVapor_CC / (nWaterVapor_CC + nAir_CC)
         gammaGas_CC = 1 + (1 / ((xWaterVapor_CC / (GammaWV - 1)) + (xAir_CC / (GammaAir - 1))))
-        m_lost = mDotThruOrifice(cCPress, ambientP, rhoGas_CC, gammaGas_CC, 0.1, VentSolenoidDiam * ventSol) * dt
+        m_lost = mDotThruOrifice(cCPress, ambientP, rhoGas_CC, gammaGas_CC, 0.1, VentSolenoidDiam * sim_data[2]) * dt
         m_water_lost = m_lost * xWaterVapor_CC
         n_Air_lost = ((m_lost * 1000) * xAir_CC) / MW_Air
             
