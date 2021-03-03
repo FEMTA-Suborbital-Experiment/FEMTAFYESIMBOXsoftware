@@ -81,7 +81,9 @@ digital_sensor_interface = ArduinoI2CSimInterface(port=ARDUINO_PORT, baudrate=SE
 sensor_mem = sm.SharedMemory(name="sensors", create=True, size=120) #Edit with correct size
 sim_mem = sm.SharedMemory(name="simulation", create=True, size=4)
 sensor_data = np.ndarray(shape=(15,), dtype=np.float64, buffer=sensor_mem.buf)
-sim_data = np.ndarray(shape=(6,), dtype=np.float64, buffer=sim_mem.buf)
+sim_data = np.ndarray(shape=(4,), dtype=np.float64, buffer=sim_mem.buf)
+
+valve_states = np.ndarray(shape=(6,), dtype=np.bool)
 valve_states[:] = [True, True, True, True, True, True] # Edit to appropriate starting states
 
 # GPIO setup
@@ -226,7 +228,7 @@ if __name__ == "__main__":
         sensor_mem.close()
         sim_mem.close()
         sensor_mem.unlink()
-        sensor_mem.unlink()
+        sim_mem.unlink()
 
         # Close up busses when done
         digital_sensor_interface.close()
