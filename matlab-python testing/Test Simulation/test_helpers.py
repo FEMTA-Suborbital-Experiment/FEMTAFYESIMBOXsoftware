@@ -71,9 +71,7 @@ def mDotThruOrifice(in1, in2, rho, gamma, outletCD, outletDia):
     criticalP = upP * gamma_const
 
     if downP < criticalP: #Choked
-        r = downP / criticalP
-        r = gamma_const
-        mDot = outletCD * outletArea * np.sqrt(upP * rho * (2 * gamma / (gamma-1)) * np.power(r, (2 / gamma)) * (1 - np.power(r, ((gamma - 1) / gamma)))) #kg/s
+        mDot = outletCD * outletArea * np.sqrt(upP * rho * gamma_const) #kg/s
     else: #Subsonic
         r = downP / upP
         mDot = outletCD * outletArea * np.sqrt(upP * rho * (2 * gamma / (gamma-1)) * np.power(r, (2 / gamma)) * (1 - np.power(r, ((gamma - 1) / gamma)))) #kg/s
