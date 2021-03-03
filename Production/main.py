@@ -224,7 +224,7 @@ if __name__ == "__main__":
 
         #Close shared memory
         sensor_mem.close()
-        valve_mem.close()
+        sim_mem.close()
         sensor_mem.unlink()
         sensor_mem.unlink()
 
