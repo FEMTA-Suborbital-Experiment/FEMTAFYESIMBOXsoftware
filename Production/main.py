@@ -79,9 +79,9 @@ digital_sensor_interface = ArduinoI2CSimInterface(port=ARDUINO_PORT, baudrate=SE
 
 # Set up shared memory
 sensor_mem = sm.SharedMemory(name="sensors", create=True, size=120) #Edit with correct size
-valve_mem = sm.SharedMemory(name="valves", create=True, size=6)
+sim_mem = sm.SharedMemory(name="simulation", create=True, size=4)
 sensor_data = np.ndarray(shape=(15,), dtype=np.float64, buffer=sensor_mem.buf)
-valve_states = np.ndarray(shape=(6,), dtype=np.bool, buffer=valve_mem.buf)
+sim_data = np.ndarray(shape=(6,), dtype=np.float64, buffer=sim_mem.buf)
 valve_states[:] = [True, True, True, True, True, True] # Edit to appropriate starting states
 
 # GPIO setup
@@ -117,7 +117,7 @@ sensor_failures = [0] * 16 #All sensors, normal/min/max. Indices:
 @tl.job(interval=timedelta(seconds=1/(configs["frequency"])))
 @jit
 def run():
-    global sensor_data, valve_states, error_state, start_t
+    global sensor_data, valve_states, error_state, start_t, sim_data
     
     # Set start time
     if not start_t:
@@ -189,10 +189,16 @@ def run():
     #Valve feedback
     valve_states[:] = [GPIO.input(pin) for pin in GPIO_PINS]
 
+
     # Set Conditions
     sim_cond, flowSol, ventSol = poll_valve_states(valve_states)
     flight_cond = get_flight_conditions(start_t, times)
     altitude = np.interp(now() - start_t, t, h)
+
+    sim_data[0] = altitude
+    sim_data[1] = flowSol
+    sim_data[2] = ventSol
+    sim_data[3] = (now() - start_t).total_seconds()
     
     
 if __name__ == "__main__":
