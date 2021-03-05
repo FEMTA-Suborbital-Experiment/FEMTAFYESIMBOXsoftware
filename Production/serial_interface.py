@@ -25,7 +25,7 @@ class ArduinoI2CSimInterface(mp.Process):
     """
     # Establish serial port connection and wait for Arduino to respond
     def connect(self, timeout=5.0):
-        print("Waiting for Arduino on serial port", end='')
+        print("Waiting for Arduino on serial port", end='', flush=True)
         self.sp.open()  # Connect to Arduino over serial port, triggering reset
         self.sp.flush()
         t_start = datetime.now()
@@ -33,7 +33,7 @@ class ArduinoI2CSimInterface(mp.Process):
         while self.sp.in_waiting == 0:
             if datetime.now() - t_start > t_delta:
                 raise ConnectionError("Waiting for Arduino over serial port timed out")
-            print(".", end='')
+            print(".", end='', flush=True)
             time.sleep(0.5) # Don't hog the processor busywaiting
         print("\nArduino has signaled ready")
         self.processed.set()
@@ -48,15 +48,15 @@ class ArduinoI2CSimInterface(mp.Process):
             if self.sp.in_waiting > 0:
                 raw_line = self.sp.read_until()     # Read until a '\n' newline character
                 try:
-                    line = raw_line.decode.rstrip() # Attempt to convert bytes to string
-                except (UnicodeDecodeError):        # Invalid utf8 bytes in received sequence
+                    line = raw_line.decode().rstrip()   # Attempt to convert bytes to string
+                except (UnicodeDecodeError):            # Invalid utf8 bytes in received sequence
                     line = f"Raw Bytes {raw_line}"
                 
                 if "processed" in line:
                     self.processed.set()
-                    print(f"{datetime.now()} [SERIAL] >> {line}") # Send to both if split
+                    print(f"{datetime.now()} [SERIAL] >> {line}", flush=True) # Send to both if split
                 else:
-                    print(f"{datetime.now()} [SERIAL] >> {line}") # Send this to a different stream to prevent clogging?
+                    print(f"{datetime.now()} [SERIAL] >> {line}", flush=True) # Send this to a different stream to prevent clogging?
 
         raise ConnectionError("Arduino serial port closed unexpectedly")
 
@@ -82,3 +82,4 @@ class ArduinoI2CSimInterface(mp.Process):
     def close(self):
         self.sp.close()
         self.processed.clear()
+        mp.Process.terminate(self)
