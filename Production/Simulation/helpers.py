@@ -79,13 +79,12 @@ def mDotThruOrifice(in1, in2, rho, gamma, outletCD, outletDia):
     gamma_const = pow(2 / (gamma + 1), gamma / (gamma - 1))
     criticalP = upP * gamma_const
 
-    if(downP < criticalP): #Choked
-        r = downP / criticalP
-        r = gamma_const
+    if (downP < criticalP): #Choked
+        mDot = outletCD * outletArea * np.sqrt(upP * rho * gamma_const) #kg/s
     else: #Subsonic
         r = downP / upP
-
-    mDot = outletCD * outletArea * np.sqrt(upP * rho * (2 * gamma / (gamma-1)) * pow(r, (2 / gamma)) * (1 - pow(r, ((gamma - 1) / gamma)))) #kg/s
+        mDot = outletCD * outletArea * np.sqrt(upP * rho * (2 * gamma / (gamma-1)) * pow(r, (2 / gamma)) * (1 - pow(r, ((gamma - 1) / gamma)))) #kg/s
+    
     return mDot * direction #Corrects sign on mDot to follow stated convention above
 
 

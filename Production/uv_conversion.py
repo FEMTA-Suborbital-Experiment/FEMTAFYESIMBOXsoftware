@@ -6,7 +6,6 @@
 
 from math import sin
 from random import randrange
-from numba import jit, uint16, uint8
 from common_library import twos_comp, sine_generator
 
 STEP_SIZE = 0.1
@@ -20,7 +19,6 @@ UVC2_AMP = randrange(4700-AMP_DIFF, 4700+AMP_DIFF)
 #UVD_AMP = randrange(2000-AMP_DIFF, 2000+AMP_DIFF)
 
 
-@jit(uint16)
 def sine_generator(step_size, amplitude):
     x = 0
     while True:
@@ -35,7 +33,6 @@ uvc2 = sine_generator(STEP_SIZE, UVC2_AMP)
 #uvd = sine_generator(STEP_SIZE, UVD_AMP)
 
 
-@jit(uint8(uint8))
 def make_fake_uv(state):
     if state == 0: #normal
         #return next(uva), next(uvb), next(uvc1), next(uvc2), next(uvd)
@@ -48,8 +45,7 @@ def make_fake_uv(state):
         return (UVA_AMP, UVB_AMP, UVC1_AMP, UVC2_AMP)
 
 
-@jit(uint16(uint16, uint16, uint16, uint16, uint16))
-def uv_conversion(uva, uvb, uvc1, uvc2, uvd):
+def uv_conversion(uva, uvb, uvc1, uvc2): #, uvd):
     
     output = [0] * 8    # Arduino expects 8 bytes of data values (4 * 2-byte pairs)
 

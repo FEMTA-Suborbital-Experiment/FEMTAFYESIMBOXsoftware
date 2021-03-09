@@ -1,7 +1,6 @@
 # Simple function to make sine-wave mass-spec data
 
 from common_library import sine_generator
-from numba import jit
 
 STEP_SIZE = 0.1
 AMP0 = 50
@@ -11,7 +10,6 @@ mass0_gen = sine_generator(STEP_SIZE, AMP0)
 mass1_gen = sine_generator(STEP_SIZE, AMP1)
 
 
-@jit
 def make_fake_ms(state0, state1):
     vals = next(mass0_gen), next(mass1_gen)
 
