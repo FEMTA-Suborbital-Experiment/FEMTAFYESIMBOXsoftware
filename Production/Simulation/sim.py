@@ -40,19 +40,9 @@ def main(t, h, main_freq, dt=2e-4):
     a_HFE_evap = A_HFE
     nAir_CC = N_Air_CC_0
 
-    # start_t = time.time()
-    # main_period = 1 / main_freq
-    # current_time_block = 0
-
     sim_time = 0 # <- in-simulation time that we'll need to synchronize to real time
     
     while sim_time < max(t):
-        if (sim_time % 10) < dt: print("t =", round(sim_time))
-    
-        # if sim_time >= current_time_block + main_period:
-            # current_time_block += main_period
-            # time.sleep(current_time_block - (time.time() - start_t)) #Error will be raised if negative; means that sim is not running fast enough
-
         sim_data[0] = np.interp(sim_time, t, h)
         ambientP = StandardAtm(sim_data[0])
 

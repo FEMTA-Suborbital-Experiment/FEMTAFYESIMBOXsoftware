@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 now = datetime.now
 import multiprocessing as mp
 import multiprocessing.shared_memory as sm
-#import socket #for BO flight events over Ethernet, eventually
+#import socket # for BO flight events over Ethernet, eventually
 
 import numpy as np
 from numba import jit
@@ -23,9 +23,11 @@ from condition_functions import poll_valve_states, get_flight_conditions
 from Simulation.sim import run as run_sim
 from serial_interface import ArduinoI2CSimInterface #, StartSerialForwarding
 
+
 # Define Serial port info
 ARDUINO_PORT = "/dev/ttyACM0"
 SERIAL_BAUD = 115200
+
 
 # Define addresses
 DAC = (0x28, 0x29) #DAC I2C addresses
@@ -49,8 +51,10 @@ therm_cals = (lambda x: 0, lambda x: 0,
               lambda x: 0, lambda x: 0,
               lambda x: 0)
 
+
 # Set up I2C for ADC control
 i2c = busio.I2C(3, 2) #SCL, SDA
+
 
 # Function to wait for I2C lock to be given
 """
@@ -69,6 +73,7 @@ def waitForI2CBusLock(timeout=1.0):
         sleep(0.1)  # Don't hog the processor busywaiting
     print("\nI2C lock obtained")
 
+
 # Set up Arduino
 digital_sensor_interface = ArduinoI2CSimInterface(port=ARDUINO_PORT, baudrate=SERIAL_BAUD)
 
@@ -76,6 +81,7 @@ digital_sensor_interface = ArduinoI2CSimInterface(port=ARDUINO_PORT, baudrate=SE
 # # None timeout means wait until requested bytes or terminator character received
 # arduino = serial.Serial(baudrate=SERIAL_BAUD, timeout=None)
 # arduino.port = ARDUINO_PORT # Specifying port here (not in constructor) prevents port from opening until ready
+
 
 # Set up shared memory
 sensor_mem = sm.SharedMemory(name="sensors", create=True, size=120) #Edit with correct size
@@ -86,23 +92,25 @@ sim_data = np.ndarray(shape=(4,), dtype=np.float64, buffer=sim_mem.buf)
 valve_states = np.ndarray(shape=(6,), dtype=np.bool)
 valve_states[:] = [True, True, True, True, True, True] # Edit to appropriate starting states
 
+
 # GPIO setup
 GPIO.setup(RED, GPIO.OUT)
 GPIO.setup(GRN, GPIO.OUT)
 for pin in GPIO_PINS:
     GPIO.setup(pin, GPIO.IN)
 
+
 # Miscellaneous setup and initialization
-start_t = 0
 tl = Timeloop()
+start_t = 0
 times = configs["event_times"]
-h = np.load("matlab-python testing/Test Simulation/altitude.npy").reshape((99840,))
-t = np.load("matlab-python testing/Test Simulation/time.npy").reshape((99840,))
+h = np.load("Simulation/altitude.npy")
+t = np.load("Simulation/time.npy")
 altitude = 0
 
 """
 Note on sensor failures:
-There are two types of failure: first, digital sensors can stop
+There are two types of failures: first, digital sensors can stop
 responding over I2C. This data comes from the config parser in
 config["dig_error_states"], and is stored here for each loop in error_state.
 The other type can apply to any sensor, and it is setting it at maximum
@@ -142,15 +150,15 @@ def run():
     # Process data (only read from 'sensor_data' (<- shared array); mutate 'sensors')
     sensors = [fuzz(d) for d in sensor_data[:13]] + list(sensor_data[13:]) #boolean IR doesn't need noise
     for i in range(9):
-        #i + 3 below makes the two different sets of indices line up (15 data values, 16 sensors, in diffrent orders)
-        if sensor_failures[i + 3] == 1: #min
+        # i + 3 below makes the two different sets of indices line up (15 data values, 16 sensors, in diffrent orders)
+        if sensor_failures[i + 3] == 1: # min
             sensors[i] = 0
-        elif sensor_failures[i + 3] == 2: #max
+        elif sensor_failures[i + 3] == 2: # max
             sensors[i] = 255 #TODO: what is the max value in this context? 1? 255?
-        else: #normal operation
-            if i < 4: #pressure sensors
+        else: # normal operation
+            if i < 4: # pressure sensors
                 sensors[i] = pres_cals[i](sensors[i])
-            else: #thermistors
+            else: # thermistors
                 sensors[i] = therm_cals[i - 4](sensors[i])
 
         
@@ -166,15 +174,15 @@ def run():
         elif sensor_failures[i + 1] == 2: #max
             sensors[i] = 1
     
-    #Prepare digital data to send to Arduino
-    #9 bytes for each flow, 10 for UV, 1 for error state
+    # Prepare digital data to send to Arduino
+    # 9 bytes for each flow, 10 for UV, 1 for error state
     f0_data = flow_to_bytes(sensors[8], sensors[10], sensor_failures[0])
     f1_data = flow_to_bytes(sensors[9], sensors[11], sensor_failures[1])
     #uv_data = uv_conversion(uva, uvb, uvc1, uvc2, uvd) -> removed uvd for now
     uv_data = uv_conversion(uva, uvb, uvc1, uvc2)
     digital_data = [error_state, *f0_data, *f1_data, *uv_data]
     
-    #Prepare analog data to send to DACs
+    # Prepare analog data to send to DACs
     analog_data_0 = [P[0], sensors[0], P[1], sensors[1],
                      P[2], sensors[2], P[3], sensors[3],
                      T[0], sensors[4], T[1], sensors[5],
@@ -183,12 +191,12 @@ def run():
                      IR[0], sensors[12], IR[1], sensors[13], 
                      T[4], sensors[8]]
     
-    #Output data
+    # Output data
     i2c.writeto(DAC[0], analog_data_0)
     i2c.writeto(DAC[1], analog_data_1)
     digital_sensor_interface.sendCommand(digital_data)
     
-    #Valve feedback
+    # Valve feedback
     valve_states[:] = [GPIO.input(pin) for pin in GPIO_PINS]
 
 
@@ -222,6 +230,9 @@ if __name__ == "__main__":
         GPIO.output(GRN, GPIO.LOW)
         GPIO.output(RED, GPIO.LOW)
 
+        #Close child process
+        if venv.is_alive():
+            venv.terminate()
         venv.close()
 
         #Close shared memory
