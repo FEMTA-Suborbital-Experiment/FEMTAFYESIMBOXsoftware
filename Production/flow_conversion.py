@@ -1,10 +1,7 @@
 # Functions to take the flow and temerature data from the I2C flow sensors
 # and process it into the series of bytes that the flight computer expects.
 
-from numba import jit, uint16
 
-
-@jit
 def crc(byte1, byte0):
     message = 256 * byte1 + byte0
     poly, val = 0x31, 0xff
@@ -18,12 +15,10 @@ def crc(byte1, byte0):
     return val
 
 
-@jit(uint16)
 def twos_comp(num):
     return num if num >= 0 else 65536 + num
 
 
-@jit(uint16[:])
 def flow_to_bytes(flow_data, temp_data, state): #Input flow in ml/min, temp in C
     #Handle errors
     if state == 1: #min

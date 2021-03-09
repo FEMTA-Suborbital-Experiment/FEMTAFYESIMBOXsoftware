@@ -8,7 +8,6 @@ import multiprocessing.shared_memory as sm
 #import socket # for BO flight events over Ethernet, eventually
 
 import numpy as np
-from numba import jit
 import serial
 import busio
 import RPi.GPIO as GPIO
@@ -125,7 +124,6 @@ sensor_failures = [0] * 16 #All sensors, normal/min/max. Indices:
 
 #Main looping function
 @tl.job(interval=timedelta(seconds=1/(configs["frequency"])))
-@jit
 def run():
     global sensor_data, valve_states, error_state, start_t, sim_data
     
