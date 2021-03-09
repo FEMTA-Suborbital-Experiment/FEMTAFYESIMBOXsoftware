@@ -9,6 +9,8 @@ COMMAND_LEN = 27
 
 class ArduinoI2CSimInterface(mp.Process):
 
+    # 0s timeout means read is non-blocking and returns buffered bytes immediately,
+    # None timeout means wait until requested bytes or terminator character received
     def __init__(self, port, baudrate=115200, timeout=None):
         # Init super class (multiprocessing Process)
         mp.Process.__init__(self, name='ArduinoI2CSimInterface', daemon=True)

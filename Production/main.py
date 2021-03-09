@@ -21,7 +21,8 @@ from uv_conversion import uv_conversion, make_fake_uv
 from add_noise import fuzz
 from condition_functions import poll_valve_states, get_flight_conditions
 from Simulation.sim import run as run_sim
-from serial_interface import ArduinoI2CSimInterface #, StartSerialForwarding
+from serial_interface import ArduinoI2CSimInterface
+from i2c_interface import i2c, waitForI2CBusLock # I2C set up in an import file
 
 # Define Serial port info
 ARDUINO_PORT = "/dev/ttyACM0"
@@ -49,33 +50,8 @@ therm_cals = (lambda x: 0, lambda x: 0,
               lambda x: 0, lambda x: 0,
               lambda x: 0)
 
-# Set up I2C for ADC control
-i2c = busio.I2C(3, 2) #SCL, SDA
-
-# Function to wait for I2C lock to be given
-"""
-Obtaining I2C lock grants sole access to the I2C bus and it is good practice to request a
-lock to ensure stability and predictability. The I2C bus can be run without obtaining a
-lock without issues assuming nothing else will try to touch the bus.
-"""
-def waitForI2CBusLock(timeout=1.0):
-    print("Waiting for lock on I2C bus to be granted", end='')
-    t_start = datetime.now()
-    t_delta = timedelta(seconds=timeout)
-    while not i2c.try_lock():
-        if datetime.now() - t_start > t_delta:
-            raise RuntimeError("Waiting for I2C lock port timed out")
-        print(".", end='')
-        sleep(0.1)  # Don't hog the processor busywaiting
-    print("\nI2C lock obtained")
-
 # Set up Arduino
 digital_sensor_interface = ArduinoI2CSimInterface(port=ARDUINO_PORT, baudrate=SERIAL_BAUD)
-
-# # 0s timeout means read is non-blocking and returns buffered bytes immediately,
-# # None timeout means wait until requested bytes or terminator character received
-# arduino = serial.Serial(baudrate=SERIAL_BAUD, timeout=None)
-# arduino.port = ARDUINO_PORT # Specifying port here (not in constructor) prevents port from opening until ready
 
 # Set up shared memory
 sensor_mem = sm.SharedMemory(name="sensors", create=True, size=120) #Edit with correct size
@@ -206,14 +182,10 @@ def run():
 if __name__ == "__main__":
     try:
         waitForI2CBusLock(1.0)      # Wait for exclusive access to I2C port (usually instant)
-        # arduino.open()              # Open serial port
-        # waitForArduinoReady(5.0)    # Wait for Arduino to signal ready
         digital_sensor_interface.connect()
 
-        # serial_handler = mp.Process(target=StartSerialForwarding, args=(arduino,), daemon=True) # Daemon process for serial port
         venv = mp.Process(target=run_sim, kwargs={"main_freq": 1/(configs["freqency"])})
         digital_sensor_interface.start() # Start mp Process
-        # serial_handler.start()
         venv.start()
         tl.start(block=True)
         venv.join()
