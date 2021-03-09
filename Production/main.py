@@ -83,13 +83,10 @@ digital_sensor_interface = ArduinoI2CSimInterface(port=ARDUINO_PORT, baudrate=SE
 
 
 # Set up shared memory
-sensor_mem = sm.SharedMemory(name="sensors", create=True, size=120) #Edit with correct size
+sensor_mem = sm.SharedMemory(name="sensors", create=True, size=1200) #Edit with correct size -> ndarray.nbytes
 sim_mem = sm.SharedMemory(name="simulation", create=True, size=4)
-sensor_data = np.ndarray(shape=(15,), dtype=np.float64, buffer=sensor_mem.buf)
+sensor_data = np.ndarray(shape=(10, 15), dtype=np.float64, buffer=sensor_mem.buf)
 sim_data = np.ndarray(shape=(4,), dtype=np.float64, buffer=sim_mem.buf)
-
-valve_states = np.ndarray(shape=(6,), dtype=np.bool)
-valve_states[:] = [True, True, True, True, True, True] # Edit to appropriate starting states
 
 
 # GPIO setup
@@ -106,6 +103,7 @@ times = configs["event_times"]
 h = np.load("Simulation/altitude.npy")
 t = np.load("Simulation/time.npy")
 altitude = 0
+sensor_data_index = 0
 
 """
 Note on sensor failures:
@@ -125,7 +123,7 @@ sensor_failures = [0] * 16 #All sensors, normal/min/max. Indices:
 #Main looping function
 @tl.job(interval=timedelta(seconds=1/(configs["frequency"])))
 def run():
-    global sensor_data, valve_states, error_state, start_t, sim_data
+    global sensor_data, sensor_data_index, error_state, start_t, sim_data #not really needed, but ok to have
     
     # Set start time
     if not start_t:
@@ -140,13 +138,17 @@ def run():
     for period in configs["all_error_states"]:
         if period[0] <= now() - start_t < period[1]:
             sensor_failures = period[2]
+
     
+    # Process data (only read from 'sensor_data' (<- shared array); mutate 'sensors')
+    # Use appropriate row of array, going from 0 to 9 repeatedly
+    sensors = [fuzz(d) for d in sensor_data[sensor_data_index][:13]] + list(sensor_data[sensor_data_index][13:]) #boolean IR doesn't need noise
+    sensor_data_index = (sensor_data_index + 1) % 10
+
     # Incoming sensor data: (15 floats)
     # pres0, pres1, pres2, pres3, therm0, therm1, therm2, therm3, therm4,
     # dig_flow0, dig_flow1, dig_temp0, dig_temp1, ir_flow0, ir_flow1
-    
-    # Process data (only read from 'sensor_data' (<- shared array); mutate 'sensors')
-    sensors = [fuzz(d) for d in sensor_data[:13]] + list(sensor_data[13:]) #boolean IR doesn't need noise
+
     for i in range(9):
         # i + 3 below makes the two different sets of indices line up (15 data values, 16 sensors, in diffrent orders)
         if sensor_failures[i + 3] == 1: # min
@@ -170,7 +172,7 @@ def run():
         if sensor_failures[i + 1] == 1: #min
             sensors[i] = 0
         elif sensor_failures[i + 1] == 2: #max
-            sensors[i] = 1
+            sensors[i] = 255
     
     # Prepare digital data to send to Arduino
     # 9 bytes for each flow, 10 for UV, 1 for error state
@@ -195,7 +197,7 @@ def run():
     digital_sensor_interface.sendCommand(digital_data)
     
     # Valve feedback
-    valve_states[:] = [GPIO.input(pin) for pin in GPIO_PINS]
+    valve_states = [GPIO.input(pin) for pin in GPIO_PINS]
 
 
     # Set Conditions
