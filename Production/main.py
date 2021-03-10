@@ -8,7 +8,6 @@ import multiprocessing.shared_memory as sm
 #import socket # for BO flight events over Ethernet, eventually
 
 import numpy as np
-import serial
 import busio
 import RPi.GPIO as GPIO
 from timeloop import Timeloop
