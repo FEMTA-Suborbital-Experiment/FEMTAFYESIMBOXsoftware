@@ -51,87 +51,91 @@ def main(sim_vars, sim_data, dt=2e-4):
         rho_HFE = nvcRho(sim_vars[5]) #tankTempLiquid_HFE
 
         # Pressure of Gas [Pa]
-        tankPress = (sim_vars[12] * R * sim_vars[4]) / sim_vars[14] #(n_Gas * R * tankTempGas) / volGas
+        sim_vars[2] = (sim_vars[12] * R * sim_vars[4]) / sim_vars[14] #tankPress = (n_Gas * R * tankTempGas) / volGas
 
         # Amount of HFE either condensing or evaporating [kg]
         if sim_vars[9] == 0: #m_HFE_liquid
             sim_vars[17] = 0 #a_HFE_evap
         elif sim_vars[8] == 0: #m_HFE_vapor
-            sim_vars[16]= 0 #a_HFE_cond
+            sim_vars[16] = 0 #a_HFE_cond
 
-        m_HFE_transfer = HerKnu(Pvap_HFE, tankTempLiquid_HFE, tankTempGas, tankPress, M_HFE, a_HFE_evap, a_HFE_cond, Ce_HFE, Cc_HFE) * dt
-        if tankPress > Pvap_HFE and m_HFE_transfer > 0:
+        #tankTempLiquid_HFE, tankTempGas, tankPress, a_HFE_evap, a_HFE_cond
+        m_HFE_transfer = HerKnu(Pvap_HFE, sim_vars[5], sim_vars[4], sim_vars[2], M_HFE, sim_vars[17], sim_vars[16], Ce_HFE, Cc_HFE) * dt
+        if sim_vars[2] > Pvap_HFE and m_HFE_transfer > 0: #tankPress
             m_HFE_transfer = 0
             
         # Update mass of HFE liquid and vapor [kg]
-        m_HFE_liquid = m_HFE_liquid - m_HFE_transfer
-        m_HFE_vapor = m_HFE_transfer + m_HFE_vapor
+        sim_vars[9] -= m_HFE_transfer #m_HFE_liquid
+        sim_vars[8] += m_HFE_transfer #m_HFE_vapor
             
         # Update moles/volume of HFE vapor/liquid 
-        vol_HFE_liquid = m_HFE_liquid / rho_HFE
-        n_HFE_vapor = (m_HFE_vapor * 1000) / MW_HFE
+        vol_HFE_liquid = sim_vars[9] / rho_HFE #m_HFE_liquid
+        sim_vars[13] = (sim_vars[8] * 1000) / MW_HFE #n_HFE_vapor, m_HFE_vapor
             
         # Temperature of Gas [K]
-        tankTempGas = ((m_HFE_transfer * Cp_HFEliquid * tankTempLiquid_HFE) + (mGas2_tank * CpGas2_tank * tankTempGas)) / ((Cp_HFEliquid * m_HFE_transfer) + (mGas2_tank * CpGas2_tank))
+        #tankTempGas = tankTempLiquid_HFE, tankTempGas
+        sim_vars[4] = ((m_HFE_transfer * Cp_HFEliquid * sim_vars[5]) + (mGas2_tank * CpGas2_tank * sim_vars[4])) / ((Cp_HFEliquid * m_HFE_transfer) + (mGas2_tank * CpGas2_tank))
 
         # Update total amount of Gas (Air + HFE)
-        n_Gas = n_HFE_vapor + N_Air_tank
-        volGas = V_tank - sim_vars[0] - vol_HFE_liquid
+        sim_vars[12] = sim_vars[8] + N_Air_tank #n_Gas = n_HFE_vapor
+        sim_vars[14] = V_tank - sim_vars[0] - vol_HFE_liquid #volGas = volWater_tank
 
         # Temperature Update [K]
         Q_HFE = m_HFE_transfer * H_evap_HFE
-        tankTempLiquid_HFE += (-Q_HFE / (m_HFE_liquid * Cp_HFEliquid))
+        sim_vars[5] += (-Q_HFE / (sim_vars[9] * Cp_HFEliquid)) #tankTempLiquid_HFE, m_HFE_liquid
 
         # -=-=- COLLECTION CHAMBER -=-=-
         # Surface Area of Collected Water [m^2]
-        r = ((3 * volWater_CC) / (4 * pi)) ** (1 / 3)
+        r = ((3 * sim_vars[1]) / (4 * pi)) ** (1 / 3) #volWater_CC
         A_water = 4 * pi * r * r
 
         # Vapor Pressure of Water [Pa]
-        Pvap_water = waterVP(cCTempLiquid)
+        Pvap_water = waterVP(sim_vars[7]) #cCTempLiquid
 
         # Evaporation Heat of Water [kJ/kg]
-        h_evap_water = waterHV(cCTempLiquid) / 1000
+        h_evap_water = waterHV(sim_vars[7]) / 1000 #cCTempLiquid
 
         # Mass of water either evaporating or condensing at current timestep [kg]
-        m_water_transfer = HerKnu(Pvap_water, cCTempLiquid, cCTempGas, cCPress, M_H2O, A_water, A_water, Ce_water, Cc_water) * dt
-        if cCPress > Pvap_water and m_water_transfer > 0:
+        #cCTempLiquid, cCTempGas, cCPress
+        m_water_transfer = HerKnu(Pvap_water, sim_vars[7], sim_vars[6], sim_vars[3], M_H2O, A_water, A_water, Ce_water, Cc_water) * dt
+        if sim_vars[3] > Pvap_water and m_water_transfer > 0: #cCPress
             m_water_transfer = 0
             
         # Mass of gas lost through vent solenoid [kg]
-        nWaterVapor_CC = (m_water_vapor * 1000) / MW_Water
-        rhoGas_CC = (((nAir_CC * MW_Air) / 1000) + ((nWaterVapor_CC * MW_Water) / 1000)) / (V_CC - (m_water_liquid / Rho_water))
-        xAir_CC = nAir_CC / (nAir_CC + nWaterVapor_CC)
-        xWaterVapor_CC = nWaterVapor_CC / (nWaterVapor_CC + nAir_CC)
+        nWaterVapor_CC = (sim_vars[10] * 1000) / MW_Water #m_water_vapor
+        #nAir_CC, m_water_liquid
+        rhoGas_CC = (((sim_vars[18] * MW_Air) / 1000) + ((nWaterVapor_CC * MW_Water) / 1000)) / (V_CC - (sim_vars[11] / Rho_water))
+        xAir_CC = sim_vars[18] / (sim_vars[18] + nWaterVapor_CC) #nAir_CC
+        xWaterVapor_CC = nWaterVapor_CC / (nWaterVapor_CC + sim_vars[18]) #nAir_CC
         gammaGas_CC = 1 + (1 / ((xWaterVapor_CC / (GammaWV - 1)) + (xAir_CC / (GammaAir - 1))))
-        m_lost = mDotThruOrifice(cCPress, ambientP, rhoGas_CC, gammaGas_CC, 0.1, VentSolenoidDiam * sim_data[2]) * dt
+        #cCPress, tankPress
+        m_lost = mDotThruOrifice(sim_vars[3], ambientP, rhoGas_CC, gammaGas_CC, 0.1, VentSolenoidDiam * sim_data[2]) * dt
         m_water_lost = m_lost * xWaterVapor_CC
         n_Air_lost = ((m_lost * 1000) * xAir_CC) / MW_Air
             
         # Moles of Air in CC 
-        nAir_CC -= n_Air_lost
+        sim_vars[18] -= n_Air_lost #nAir_CC
 
         # Total mass of water vapor and liquid at current time [kg]
-        m_water_vapor = m_water_transfer - m_water_lost + m_water_vapor
-        m_water_liquid = (volWater_CC * Rho_water) - m_water_vapor
+        sim_vars[10] += m_water_transfer - m_water_lost #m_water_vapor
+        sim_vars[11] = (sim_vars[1] * Rho_water) - sim_vars[10] #m_water_liquid = volWater_CC, m_water_vapor
 
         # Pressure Update [Pa]
-        cCPress = ((nAir_CC + nWaterVapor_CC) * R * cCTempGas) / (V_CC - (m_water_liquid / Rho_water))
+        #cCPress = nAir_CC, cCTempGas, m_water_liquid
+        sim_vars[3] = ((sim_vars[18] + nWaterVapor_CC) * R * sim_vars[6]) / (V_CC - (sim_vars[11] / Rho_water))
             
         # Liquid Temperature Update [K]
-        if m_water_liquid != 0:
+        if sim_vars[11] != 0: #m_water_liquid
             Q_water = m_water_transfer * h_evap_water
             mwn = flo_water * Rho_water * dt
-            T1 = ((m_water_liquid - mwn) / m_water_liquid) * cCTempLiquid
-            T2 = (mwn / m_water_liquid) * 300
-            T3 = -Q_water / (m_water_liquid * Cp_water_liquid)
-            cCTempLiquid = T1 + T2 + T3
+            T1 = ((sim_vars[11] - mwn) / sim_vars[11]) * sim_vars[7] #m_water_liquid, m_water_liquid, cCTempLiquid
+            T2 = (mwn / sim_vars[11]) * 300 #m_water_liquid
+            T3 = -Q_water / (sim_vars[11] * Cp_water_liquid) #m_water_liquid
+            sim_vars[7] = T1 + T2 + T3 #cCTempLiquid
 
         sim_time += dt
 
-
     sensor_data = None #TODO: fill out this array (shape (15,10))
-
     return sensor_data, sim_vars
 
 
