@@ -1,3 +1,6 @@
+# First attempt at numba integration. Doesn't work in current state; 
+# see sim_test2.py
+
 import time
 import multiprocessing.shared_memory as sm
 

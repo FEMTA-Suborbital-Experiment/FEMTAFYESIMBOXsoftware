@@ -1,3 +1,6 @@
+# Second attempt, now with plotting. This works and has been verified,
+# but won't integrate with main.py without modification (see sim_test3.py)
+
 import matplotlib.pyplot as plt
 import numpy as np
 
