@@ -4,8 +4,9 @@
 # The latter determines the time passed and sets a flight condition
 # based on whether the time passed is greater than the preset
 # elements of the flight condition.
-from datetime import datetime
-now = datetime.now
+
+#from datetime import datetime
+#now = datetime.now
 
 
 # Sim conditions not used throughout program
