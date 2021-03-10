@@ -1,4 +1,5 @@
-# Main virtual environment simulation file.
+# Third iteration, now being built to support integration with main.py.
+# Synchronization is the driving force behind the changes
 
 import time
 import multiprocessing.shared_memory as sm
@@ -10,95 +11,53 @@ from constants import *
 from helpers import *
 
 
-@njit((float64[:], float64[:], float64, float64), fastmath=True, cache=True)
-def main(t, h, main_freq, dt=2e-4):
-    # Set up shared memory
-    # sensor_mem = sm.SharedMemory(name="sensors")
-    sim_mem = sm.SharedMemory(name="simulation")
-    # sensor_data = np.ndarray(shape=(15,), dtype=np.float64, buffer=sensor_mem.buf) #Edit with correct size
-    sim_data = np.ndarray(shape=(4,), dtype=np.float64, buffer=sim_mem.buf)
-    # sim_data: [altitude, flowSol, ventSol, (now() - start_t).total_seconds()]
-
-    # Variable initialization
-    volWater_tank = VolWater0_tank                        #Initial volume of water in one Prop Tank [m^3]
-    volWater_CC = 0                                       #Initial volume of water in Collection Chamber [m^3]
-    tankPress = P0_tank                                   #Pressure in Prop Tank [Pa]
-    cCPress = P0_CC                                       #Pressure in Collection Chamber [Pa]
-    tankTempGas = T0_tank                                 #Temperature of gas in Prop Tank [K]
-    tankTempLiquid_HFE = T0_tank                          #Temperature of HFE Liquid in Prop Tank [K]
-    cCTempGas = T0_CC                                     #Temperature of gas in CC [K]
-    cCTempLiquid = T0_CC                                  #Temperature of water liquid in CC [K]
-    m_HFE_vapor = 0                                       #Initial mass of HFE vapor in prop tank
-    m_HFE_liquid = VolHFE_liquid0_tank * nvcRho(T0_tank)  #Initial mass of HFE liquid in prop tank
-    m_water_vapor = 0                                     #Initial mass of water vapor in CC
-    m_water_liquid = 0                                    #Initial mass of water liquid in CC
-    n_Gas = N_Air_tank                                    #Initial moles of gas in tank
-    n_HFE_vapor = 0                                       #Initial moles of HFE vapor in tank
-    volGas = VolAir0                                      #Initial volume of gas in tank [m^3]
-    volWater_shut = 0                                     #Initial volume of water in prop tank when valve shuts [m^3]
-    a_HFE_cond = A_HFE
-    a_HFE_evap = A_HFE
-    nAir_CC = N_Air_CC_0
+@njit(signature=(float64[:], float64[:], float64),fastmath=True, cache=True)
+def main(sim_vars, sim_data, dt=2e-4):
 
     sim_time = 0 # <- in-simulation time that we'll need to synchronize to real time
     
-    while sim_time < max(t):
-        sim_data[0] = np.interp(sim_time, t, h)
-        ambientP = StandardAtm(sim_data[0])
+    for _ in range(10):
+        ambientP = StandardAtm(sim_data[0]) #ambientP = StandardAtm(alt)
 
-        if volWater_tank - volWater_shut < 0:
+        if sim_vars[0] - sim_vars[15] < 0: #volWater_tank - volWater_shut
             break #TODO: incorporate this into logging scheme (but the break is normal and expected)
-        
-        # Condition for beginning experiment
-        if sim_data[0] < 80000:
-            sim_data[2] = 1
-            sim_data[1] = 0
-        else:
-            sim_data[1] = 1 if sim_time > 200 else 2
-            sim_data[2] = 1
-        
-        # Conditions for loop termination
-        if sim_data[1] == 1 and volWater_shut == 0:
-            volWater_shut = 0.5 * volWater_tank
-        elif sim_data[1] == 2:
-            volWater_shut = 0
 
         # Volumetric Flow Rate of Liquid Water Propellant through one orifice [m^3/s]
-        flo_water = sim_data[1] * CD_orifice * A_O * np.sqrt(2 * abs(tankPress - cCPress) / (Rho_water * (1 - Beta**4)))
-        if tankPress < cCPress:
+        flo_water = sim_data[1] * CD_orifice * A_O * np.sqrt(2 * abs(sim_vars[2] - sim_vars[3]) / (Rho_water * (1 - Beta**4))) #flo_water = flowSol * CD_orifice * A_O * np.sqrt(2 * abs(tankPress - cCPress) / (Rho_water * (1 - Beta**4)))
+        if sim_vars[2] < sim_vars[3]: #tankPress < cCPress
             flo_water *= -1
 
         # Update of Liquid Water Propellant Volumes in Tank & CC [m^3]
-        volWater_tank -= flo_water * dt
-        volWater_CC += flo_water * dt
+        sim_vars[0] -= flo_water * dt #volWater_tank -=
+        sim_vars[1] += flo_water * dt #volWaterCC +=
 
         # -=-=- PROPELLANT TANK -=-=-
         # Mass of Gas in the tank [kg]
         mAir_tank = (N_Air_tank * MW_Air) / 1000
-        xAir2_tank = N_Air_tank / (N_Air_tank + n_HFE_vapor)
-        xHFEvapor2_tank = n_HFE_vapor / (N_Air_tank + n_HFE_vapor)
-        yAir2_tank = mAir_tank / (mAir_tank + m_HFE_vapor)
-        yHFEvapor2_tank = m_HFE_vapor / (mAir_tank + m_HFE_vapor)
+        xAir2_tank = N_Air_tank / (N_Air_tank + sim_vars[13]) #n_HFE_vapor
+        xHFEvapor2_tank = sim_vars[13] / (N_Air_tank + sim_vars[13]) #n_HFE_vapor
+        yAir2_tank = mAir_tank / (mAir_tank + sim_vars[8]) #m_HFE_vapor
+        yHFEvapor2_tank = sim_vars[8] / (mAir_tank + sim_vars[8]) #m_HFE_vapor
         MWGas2_tank = (MW_Air * xAir2_tank) + (MW_HFE * xHFEvapor2_tank)
-        mGas2_tank = (n_Gas * MWGas2_tank) / 1000
+        mGas2_tank = (sim_vars[12] * MWGas2_tank) / 1000 #n_Gas
             
         # Specific Heat of Gas in Tank before HFE transfer (state 2) [kJ/kg-K]
         CpGas2_tank = (Cp_Air * yAir2_tank) + (Cp_HFEliquid * yHFEvapor2_tank)
             
         # Vapor Pressure of HFE [Pa]
-        Pvap_HFE = nvcVP(tankTempLiquid_HFE)
+        Pvap_HFE = nvcVP(sim_vars[5]) #tankTempLiquid_HFE
 
         # Density of HFE liquid [kg/m^3]
-        rho_HFE = nvcRho(tankTempLiquid_HFE)
+        rho_HFE = nvcRho(sim_vars[5]) #tankTempLiquid_HFE
 
         # Pressure of Gas [Pa]
-        tankPress = (n_Gas * R * tankTempGas) / volGas
+        tankPress = (sim_vars[12] * R * sim_vars[4]) / sim_vars[14] #(n_Gas * R * tankTempGas) / volGas
 
         # Amount of HFE either condensing or evaporating [kg]
-        if m_HFE_liquid == 0:
-            a_HFE_evap = 0
-        elif m_HFE_vapor == 0:
-            a_HFE_cond = 0
+        if sim_vars[9] == 0: #m_HFE_liquid
+            sim_vars[17] = 0 #a_HFE_evap
+        elif sim_vars[8] == 0: #m_HFE_vapor
+            sim_vars[16]= 0 #a_HFE_cond
 
         m_HFE_transfer = HerKnu(Pvap_HFE, tankTempLiquid_HFE, tankTempGas, tankPress, M_HFE, a_HFE_evap, a_HFE_cond, Ce_HFE, Cc_HFE) * dt
         if tankPress > Pvap_HFE and m_HFE_transfer > 0:
@@ -117,7 +76,7 @@ def main(t, h, main_freq, dt=2e-4):
 
         # Update total amount of Gas (Air + HFE)
         n_Gas = n_HFE_vapor + N_Air_tank
-        volGas = V_tank - volWater_tank - vol_HFE_liquid
+        volGas = V_tank - sim_vars[0] - vol_HFE_liquid
 
         # Temperature Update [K]
         Q_HFE = m_HFE_transfer * H_evap_HFE
@@ -170,15 +129,50 @@ def main(t, h, main_freq, dt=2e-4):
 
         sim_time += dt
 
+
+    sensor_data = None #TODO: fill out this array (shape (15,10))
+
+    return sensor_data, sim_vars
+
+
+
 def run(dt, main_freq=100.0): #main_freq is frequency that main.py runs at (needed for synchronization)
     try:
-        t = np.load("time.npy")
-        h = np.load("altitude.npy")
         start_t = time.time()
-        main(t, h, main_freq, dt)
-        print(time.time() - start_t)
+
+        # Set up shared memory
+        sensor_mem = sm.SharedMemory(name="sensors")
+        sim_mem = sm.SharedMemory(name="simulation")
+        sensor_data = np.ndarray(shape=(15,), dtype=np.float64, buffer=sensor_mem.buf) #Edit with correct size
+        sim_data = np.ndarray(shape=(4,), dtype=np.float64, buffer=sim_mem.buf)
+        # sim_data: [altitude, flowSol, ventSol, time since liftoff]
+
+        # Initialize simulation variables
+        sim_vars = np.array([\
+            VolWater0_tank,                         #0  volWater_tank: Initial volume of water in one Prop Tank [m^3]
+            0,                                      #1  volWater_CC: Initial volume of water in Collection Chamber [m^3]
+            P0_tank,                                #2  tankPress: Pressure in Prop Tank [Pa]
+            P0_CC,                                  #3  cCPress: Pressure in Collection Chamber [Pa]
+            T0_tank,                                #4  tankTempGas: Temperature of gas in Prop Tank [K]
+            T0_tank,                                #5  tankTempLiquid_HFE: Temperature of HFE Liquid in Prop Tank [K]
+            T0_CC,                                  #6  cCTempGas: Temperature of gas in CC [K]
+            T0_CC,                                  #7  cCTempLiquid: Temperature of water liquid in CC [K]
+            0,                                      #8  m_HFE_vapor: Initial mass of HFE vapor in prop tank
+            VolHFE_liquid0_tank * nvcRho(T0_tank),  #9  m_HFE_liquid: Initial mass of HFE liquid in prop tank
+            0,                                      #10 m_water_vapor: Initial mass of water vapor in CC
+            0,                                      #11 m_water_liquid: Initial mass of water liquid in CC
+            N_Air_tank,                             #12 n_Gas: Initial moles of gas in tank
+            0,                                      #13 n_HFE_vapor: Initial moles of HFE vapor in tank
+            VolAir0,                                #14 volGas: Initial volume of gas in tank [m^3]
+            0,                                      #15 volWater_shut: Initial volume of water in prop tank when valve shuts [m^3]
+            A_HFE,                                  #16 a_HFE_cond
+            A_HFE,                                  #17 a_HFE_evap
+            N_Air_CC_0])                            #18 nAir_CC
+
+        while condition:
+            sensor_data[:][:], sim_vars[:] = main(sim_vars, sim_data, dt)
+
     finally:
         #Close shared memory
-        # sensor_mem.close()
-        # valve_mem.close()
-        pass
+        sensor_mem.close()
+        sim_mem.close()
