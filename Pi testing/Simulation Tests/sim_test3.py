@@ -1,5 +1,6 @@
 # Third iteration, now being built to support integration with main.py.
 # Synchronization is the driving force behind the changes
+ # Never tested, now outdated with move to generator with sim_test4
 
 import time
 import multiprocessing.shared_memory as sm
