@@ -1,11 +1,10 @@
 # Main file to run on Raspberry Pi to coordinate simbox operations.
 
-from time import sleep
 from datetime import datetime, timedelta
 now = datetime.now
 import multiprocessing as mp
 import multiprocessing.shared_memory as sm
-#import socket # for BO flight events over Ethernet, eventually
+#import socket #for BO flight events over Ethernet, eventually
 
 import numpy as np
 import busio
@@ -17,7 +16,7 @@ from flow_conversion import flow_to_bytes
 from mass_spec import make_fake_ms
 from uv_conversion import uv_conversion, make_fake_uv
 from add_noise import fuzz
-from condition_functions import poll_valve_states, get_flight_conditions
+from condition_functions import poll_valve_states #, get_flight_conditions
 from Simulation.sim import run as run_sim
 from serial_interface import ArduinoI2CSimInterface
 from i2c_interface import i2c, waitForI2CBusLock # I2C set up in an import file
@@ -50,8 +49,10 @@ therm_cals = (lambda x: 0, lambda x: 0,
               lambda x: 0, lambda x: 0,
               lambda x: 0)
 
+
 # Set up Arduino
 digital_sensor_interface = ArduinoI2CSimInterface(port=ARDUINO_PORT, baudrate=SERIAL_BAUD)
+
 
 # Set up shared memory
 sensor_mem = sm.SharedMemory(name="sensors", create=True, size=1200) #Edit with correct size -> ndarray.nbytes
@@ -75,6 +76,7 @@ h = np.load("Simulation/altitude.npy")
 t = np.load("Simulation/time.npy")
 altitude = 0
 sensor_data_index = 0
+
 
 """
 Note on sensor failures:
@@ -191,6 +193,7 @@ if __name__ == "__main__":
         venv.start()
         tl.start(block=True)
         venv.join()
+
     finally:
         #Turn off LEDs
         GPIO.output(GRN, GPIO.LOW)
