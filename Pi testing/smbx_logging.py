@@ -7,11 +7,11 @@ class Logger:
     file_objects = dict()
 
     def __enter__(self):
-        self.instances += 1
+        self.__class__.instances += 1
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.instances -= 1
+        self.__class__.instances -= 1
         if not self.instances:
             for fo in self.file_objects.values():
                 fo.close()
