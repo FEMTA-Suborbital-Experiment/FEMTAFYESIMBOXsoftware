@@ -13,7 +13,7 @@ class Logger:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.instances -= 1
         if not self.instances:
-            for fo in self.file_objects:
+            for fo in self.file_objects.values():
                 fo.close()
         return None
 
