@@ -15,7 +15,7 @@ class Logger:
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         Logger.instances -= 1
-        if not Logger.instances:    # No more active instances remaining, i.e. we're last to be shut down
+        if not Logger.instances: # No more active instances remaining, i.e. we're last to be shut down
             for fo in Logger.file_objects.values():
                 fo.close()
         return None
@@ -32,7 +32,7 @@ class Logger:
 
         if _print:
             # Print logged message to terminal. These should be infrequent and
-            # straightforward, so no need to incluse the logger name
+            # straightforward, so no need to include the logger name
             print(text)
 
 
