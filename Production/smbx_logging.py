@@ -1,5 +1,8 @@
-# Work-in-progress, purpose built logger for diagnostics and recording
-# during simbox experiments.
+# Purpose built logger for diagnostics and recording during simbox experiments.
+# Works with context managers. If not using context managers, call start()
+# (right) before using and close() when done.
+
+import time
 
 class Logger:
     
@@ -8,19 +11,31 @@ class Logger:
 
     def __init__(self, name):
         self.name = name
+        self.start_t = None
 
     def __enter__(self):
-        Logger.instances += 1
+        self.start()
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+        return None
+
+
+    def start(self):
+        Logger.instances += 1
+        self.start_t = time.perf_counter()
+
+    def close(self):
         Logger.instances -= 1
         if not Logger.instances: # No more active instances remaining, i.e. we're last to be shut down
             for fo in Logger.file_objects.values():
                 fo.close()
-        return None
+
 
     def write(self, text, filename, _print=False):
+        assert self.start_t is not None, f"Logger \"{self.name}\" has not had \"start()\" called"
+
         if filename not in Logger.file_objects.keys():
             # open with mode x because we neither want to overwrite a previous log nor combine two logs together
             try:
@@ -28,7 +43,7 @@ class Logger:
             except FileExistsError as e:
                 raise Exception(f"log file \"{filename}\" already exists") from e 
         
-        Logger.file_objects[filename].write(self.name + ": " + text + "\n")
+        Logger.file_objects[filename].write(f"{self.name} [{time.perf_counter() - self.start_t}]: {text}\n")
 
         if _print:
             # Print logged message to terminal. These should be infrequent and
