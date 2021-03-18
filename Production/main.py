@@ -20,6 +20,7 @@ from condition_functions import poll_valve_states #, get_flight_conditions
 from Simulation.sim import run as run_sim
 from serial_interface import ArduinoI2CSimInterface
 from i2c_interface import i2c, waitForI2CBusLock # I2C set up in an import file
+from smbx_logging import Logger
 
 
 # Define Serial port info
@@ -47,7 +48,7 @@ pres_cals = (lambda x: 0.2698*x + 0.1013, lambda x: 0.2462*x + 0.4404,
              lambda x: 0.2602*x + 0.1049, lambda x: 0)
 therm_cals = (lambda x: 0, lambda x: 0,
               lambda x: 0, lambda x: 0,
-              lambda x: 0)
+              lambda x: 0) #TODO: enter final calibrations
 
 
 # Set up Arduino
@@ -55,7 +56,7 @@ digital_sensor_interface = ArduinoI2CSimInterface(port=ARDUINO_PORT, baudrate=SE
 
 
 # Set up shared memory
-sensor_mem = sm.SharedMemory(name="sensors", create=True, size=1200) #Edit with correct size -> ndarray.nbytes
+sensor_mem = sm.SharedMemory(name="sensors", create=True, size=1200) #TODO: Edit with correct size (ndarray.nbytes)
 sim_mem = sm.SharedMemory(name="simulation", create=True, size=4)
 sensor_data = np.ndarray(shape=(10, 15), dtype=np.float64, buffer=sensor_mem.buf)
 sim_data = np.ndarray(shape=(4,), dtype=np.float64, buffer=sim_mem.buf)
@@ -70,12 +71,13 @@ for pin in GPIO_PINS:
 
 # Miscellaneous setup and initialization
 tl = Timeloop()
+log = Logger("main")
 start_t = 0
 times = configs["event_times"]
 h = np.load("Simulation/altitude.npy")
 t = np.load("Simulation/time.npy")
 altitude = 0
-sensor_data_index = 0
+sensor_data_index = -1 #since the increment is done before the read, and we want to start at 0
 
 
 """
@@ -98,7 +100,7 @@ sensor_failures = [0] * 16 #All sensors, normal/min/max. Indices:
 def run():
     global sensor_data, sensor_data_index, error_state, start_t, sim_data #not really needed, but ok to have
     
-    # Set start time
+    # To be run on first loop
     if not start_t:
         GPIO.output(GRN, GPIO.HIGH)
         start_t = now()
@@ -106,17 +108,21 @@ def run():
     # Determine new sensor failures
     for period in configs["dig_error_states"]:
         if period[0] <= now() - start_t < period[1]:
+            if period[2] != error_state:
+                log.write(f"New digital error state {period[2]}", "low_freq.txt", True)
             error_state = period[2]
 
     for period in configs["all_error_states"]:
         if period[0] <= now() - start_t < period[1]:
+            if period[2] != sensor_failures:
+                log.write(f"New general error state {period[2]}", "low_freq.txt", True)
             sensor_failures = period[2]
 
     
     # Process data (only read from 'sensor_data' (<- shared array); mutate 'sensors')
     # Use appropriate row of array, going from 0 to 9 repeatedly
-    sensors = [fuzz(d) for d in sensor_data[sensor_data_index][:13]] + list(sensor_data[sensor_data_index][13:]) #boolean IR doesn't need noise
     sensor_data_index = (sensor_data_index + 1) % 10
+    sensors = [fuzz(d) for d in sensor_data[sensor_data_index][:13]] + list(sensor_data[sensor_data_index][13:]) #boolean IR doesn't need noise
 
     # Incoming sensor data: (15 floats)
     # pres0, pres1, pres2, pres3, therm0, therm1, therm2, therm3, therm4,
@@ -148,7 +154,7 @@ def run():
             sensors[i] = 255
     
     # Prepare digital data to send to Arduino
-    # 9 bytes for each flow, 10 for UV, 1 for error state
+    # 9 bytes for each flow, 8 for UV, 1 for error state
     f0_data = flow_to_bytes(sensors[8], sensors[10], sensor_failures[0])
     f1_data = flow_to_bytes(sensors[9], sensors[11], sensor_failures[1])
     #uv_data = uv_conversion(uva, uvb, uvc1, uvc2, uvd) -> removed uvd for now
@@ -181,6 +187,14 @@ def run():
     sim_data[1] = flowSol
     sim_data[2] = ventSol
     sim_data[3] = (now() - start_t).total_seconds()
+
+    # Log high-frequency data (93 values, mostly doubles (need to convert to str and join w/ commas))
+    # lengths:   15        15       27            16             10             6             4
+    # sensor_data[indx], sensors, digital_data, analog_data_0, analog_data_1, valve_states, sim_data
+    # For now, let's write 6 decimals for floats e.g '3.141593' (may vary a bit w/ sci notation)
+    to_log = [*sensor_data[sensor_data_index], *sensors, *digital_data, *analog_data_0, *analog_data_1, *valve_states, *sim_data]
+    to_log = ",".join(map(lambda num: f"{num}:.6g", to_log))
+    log.write(to_log, "main_hf.csv", False)
     
     
 if __name__ == "__main__":
@@ -191,6 +205,7 @@ if __name__ == "__main__":
         venv = mp.Process(target=run_sim, kwargs={"main_freq": 1/(configs["freqency"])})
         digital_sensor_interface.start() # Start mp Process
         venv.start()
+        log.start()
         tl.start(block=True)
         venv.join()
 
@@ -203,6 +218,9 @@ if __name__ == "__main__":
         if venv.is_alive():
             venv.terminate()
         venv.close()
+
+        #Close logger
+        log.close()
 
         #Close shared memory
         sensor_mem.close()
