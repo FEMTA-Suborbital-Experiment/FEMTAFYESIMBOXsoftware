@@ -10,7 +10,7 @@ class Logger:
     file_objects = dict()
 
     def __init__(self, name):
-        self.name = name
+        self.name = ascii(name)
         self.start_t = None
 
     def __enter__(self):
@@ -43,7 +43,7 @@ class Logger:
             except FileExistsError as e:
                 raise Exception(f"log file \"{filename}\" already exists") from e 
         
-        Logger.file_objects[filename].write(f"{self.name} [{time.perf_counter() - self.start_t}]: {text}\n")
+        Logger.file_objects[filename].write(f"{self.name} [{time.perf_counter() - self.start_t}]: {text!a}\n")
 
         if _print:
             # Print logged message to terminal. These should be infrequent and
