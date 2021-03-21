@@ -114,7 +114,11 @@ def run():
     for period in configs["all_error_states"]:
         if period[0] <= now() - start_t < period[1]:
             if period[2] != sensor_failures:
-                log.write(f"New general error state {period[2]}", "low_freq.txt", True)
+                changes = list()
+                for i in range(16):
+                    if period[2][i] != sensor_failures[i]:
+                        changes.append(f"index {i} changed from {sensor_failures[i]} to {period[2][i]}")
+                log.write(f"Change{'s' if len(changes) != 1 else ''} in general error state: {'; '.join(changes)}", "low_freq.txt", True)
             sensor_failures = period[2]
 
     
