@@ -1,5 +1,12 @@
 # Main file to run on Raspberry Pi to coordinate simbox operations.
 
+# Check for debug mode
+import sys
+
+DEBUG = "debug" in map(str.lower, sys.argv)
+
+
+# Imports
 from datetime import datetime, timedelta
 now = datetime.now
 import multiprocessing as mp
@@ -7,8 +14,12 @@ import multiprocessing.shared_memory as sm
 #import socket #for BO flight events over Ethernet, eventually
 
 import numpy as np
-import RPi.GPIO as GPIO
 from timeloop import Timeloop
+
+if DEBUG:
+    import RPi.GPIO as GPIO
+else:
+    from debug_gpio import GPIO
 
 from config_parser import configs
 from flow_conversion import flow_to_bytes
@@ -51,7 +62,7 @@ therm_cals = (lambda x: 0, lambda x: 0,
 
 
 # Set up Arduino
-digital_sensor_interface = ArduinoI2CSimInterface(port=ARDUINO_PORT, baudrate=SERIAL_BAUD)
+digital_sensor_interface = ArduinoI2CSimInterface(port=ARDUINO_PORT, baudrate=SERIAL_BAUD, debug=DEBUG)
 
 
 # Set up shared memory
