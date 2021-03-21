@@ -4,6 +4,12 @@
 
 
 
+:: Simulation Timestep ::
+
+2e-4 sec
+
+
+
 :: Event Timing
 Each flight event (not configurable) has a time, in seconds, past launch.
 ::
