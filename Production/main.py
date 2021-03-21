@@ -127,6 +127,7 @@ def run():
     # pres0, pres1, pres2, pres3, therm0, therm1, therm2, therm3, therm4,
     # dig_flow0, dig_flow1, dig_temp0, dig_temp1, ir_flow0, ir_flow1
 
+    # Handle sensor failures for pressure and temperature sensors; apply sensor calibration curves if not in an error state
     for i in range(9):
         # i + 3 below makes the two different sets of indices line up (15 data values, 16 sensors, in diffrent orders)
         if sensor_failures[i + 3] == 1: # min
