@@ -1,27 +1,32 @@
 # Module for handling serial interactions with the Arduino
 
-import serial
-import multiprocessing as mp
 import time
-from datetime import datetime, timedelta
+import multiprocessing as mp
+
+from smbx_logging import Logger
 
 COMMAND_LEN = 27
 
 class ArduinoI2CSimInterface(mp.Process):
-
     # 0s timeout means read is non-blocking and returns buffered bytes immediately,
     # None timeout means wait until requested bytes or terminator character received
     def __init__(self, port, baudrate=115200, timeout=None, debug=False):
         # Init super class (multiprocessing Process)
         mp.Process.__init__(self, name='ArduinoI2CSimInterface', daemon=True)
-
+        
+        self.log = Logger("arduino")
         self.debug = debug
+
         if not self.debug:
-            print("Initializing serial object")
+            import serial # Import moved here for debug mode flexibility
+
+            self.log.write("Initializing serial object", "low_freq.txt", True)
             self.sp = serial.Serial(baudrate=baudrate, timeout=timeout)
             self.sp.port = port # Initialize port separately so serial port does not open immediately
+        
         else:
-            print("[DEBUG] Skipping actual initialization of serial object")
+            self.debug_log = Logger("debug")
+            self.debug_log.write("Skipping actual initialization of serial object", "low_freq.txt", True)
 
         self.processed = mp.Event() # Event sync primitive to verify a command has been processed
 
@@ -33,23 +38,22 @@ class ArduinoI2CSimInterface(mp.Process):
     """
     # Establish serial port connection and wait for Arduino to respond
     def connect(self, timeout=5.0):
-        print("Waiting for Arduino on serial port", end='', flush=True)
         if not self.debug:
+            self.log.write("Waiting for Arduino on serial port", "low_freq.txt", True, end='', flush=True)
             self.sp.open()  # Connect to Arduino over serial port, triggering reset
             self.sp.flush()
-            t_start = datetime.now()
-            t_delta = timedelta(seconds=timeout)
+            t_start = time.time()
             while self.sp.in_waiting == 0:
-                if datetime.now() - t_start > t_delta:
+                if time.time() - t_start > timeout:
                     raise ConnectionError("Waiting for Arduino over serial port timed out")
                 print(".", end='', flush=True)
                 time.sleep(0.5) # Don't hog the processor busywaiting
+            print()
+            self.log.write("Arduino has signaled ready", "low_freq.txt", True)
         else:
-            print("\n[DEBUG] In debug mode, skipping actual connection", end='')
-
-        print("\nArduino has signaled ready")
+            self.debug_log.write("Skipping acquisition of actual serial connection", "low_freq.txt", True)
+        
         self.processed.set()
-        return
 
     # Method overload for multiprocessing Process, is started in new process when .start() is called
     def run(self):
@@ -62,22 +66,20 @@ class ArduinoI2CSimInterface(mp.Process):
                     raw_line = self.sp.read_until()     # Read until a '\n' newline character
                     try:
                         line = raw_line.decode().rstrip()   # Attempt to convert bytes to string
-                    except (UnicodeDecodeError):            # Invalid utf8 bytes in received sequence
-                        line = f"Raw Bytes {raw_line}"
+                    except UnicodeDecodeError:            # Invalid utf8 bytes in received sequence
+                        line = f"Raw Bytes: {raw_line}"
                     
+                    self.log.write(f"SERIAL >> {line}", "arduino.txt")
                     if "processed" in line:
                         self.processed.set()
-                        print(f"{datetime.now()} [SERIAL] >> {line}", flush=True) # Send to both if split
-                    else:
-                        print(f"{datetime.now()} [SERIAL] >> {line}", flush=True) # Send this to a different stream to prevent clogging?
 
             raise ConnectionError("Arduino serial port closed unexpectedly")
         else:
-            print("[DEBUG] Entering serial handling loop...")
+            self.debug_log.write("Entering serial handling loop...", "low_freq.txt", True)
             while True:
                 time.sleep(0.001)
                 if not self.processed.is_set():
-                    print("[DEBUG] Setting command proccessing complete flag")
+                    self.debug_log.write("Setting command proccessing complete flag", "arduino.txt")
                     self.processed.set()
 
     # Method to send a command out to the Arduino
@@ -90,16 +92,16 @@ class ArduinoI2CSimInterface(mp.Process):
 
         if self.processed.is_set(): # Last command is processed, good to send another
             cmd = bytes(command)
-            print(f"Sending command {' '.join(f'{b:#04x}' for b in cmd)}")
-            if not self.debug:
-                sent = self.sp.write(cmd)
-            else:
-                print("[DEBUG] Would have sent command over serial")
+            cmd_str = f"{' '.join(f'{b:#04x}' for b in cmd)}"
+            if self.debug:
+                self.debug_log.write(f"Would have sent {cmd_str} over serial", "arduino.txt")
                 sent = cmd
+            else:
+                self.log.write("Sending command " + cmd_str, "")
+                sent = self.sp.write(cmd)
             self.processed.clear()
         else:
-            # This may need to be changed to a print or other log command OR figure out how to forward stderr to file seamlessly
-            raise RuntimeWarning("Arduino over serial port is not ready to recieve another command")
+            self.log.write("WARNING: Arduino over serial port is not ready to receive another command", "low_freq.txt", True)
         
         return sent, cmd
 
@@ -108,4 +110,9 @@ class ArduinoI2CSimInterface(mp.Process):
         if not self.debug:
             self.sp.close()
         self.processed.clear()
+
+        self.log.close()
+        if self.debug:
+            self.debug_log.close()
+
         mp.Process.terminate(self)

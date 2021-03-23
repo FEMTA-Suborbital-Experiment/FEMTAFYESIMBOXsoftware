@@ -31,12 +31,12 @@ class GPIO:
     def input(cls, pin):
         if pin in cls._pins.keys() and cls._pins[pin] == cls.IN:
             new_state = cls._get_new_state(pin, time.time())
-            with Logger("Debug") as log:
+            with Logger("debug") as log:
                 log.write(f"GPIO {pin} input {'high' if new_state else 'low'}", "low_freq.txt")
             return new_state
 
     @classmethod
     def output(cls, pin, state):
         if pin in cls._pins.keys() and cls._pins[pin] == cls.OUT:
-            with Logger("Debug") as log:
+            with Logger("debug") as log:
                 log.write(f"GPIO {pin} output {'high' if state else 'low'}", "low_freq.txt")
