@@ -151,7 +151,11 @@ def main(sim_data, dt, duration):
 
         sim_time += dt
         if sim_time % duration < dt:
-            yield np.array([]) #TODO: fill out with appropriate data
+            # pres0, pres1, pres2, pres3, therm0, therm1, therm2, therm3, therm4,
+            # dig_flow0, dig_flow1, dig_temp0, dig_temp1, ir_flow0, ir_flow1
+            yield np.array([tankPress, tankPress, tankPress, cCPress, tankTempGas, tankTempGas, tankTempGas, 
+            T0_tank, T0_tank, flo_water, flo_water, T0_tank, T0_tank, 255 * (sim_data[1] >= 1), 255 * (sim_data[1] >= 2)])
+            # we're assuming propellant temp is const (according to Alan). To change, replace all T0_tank with tankTempLiquid_HFE
 
 
 def run(dt, main_freq=100.0, sensitivity=10): #main_freq is frequency that main.py runs at (needed for synchronization)

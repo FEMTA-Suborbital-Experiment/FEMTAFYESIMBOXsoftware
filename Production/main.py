@@ -136,7 +136,7 @@ def run():
     # Process data (only read from 'sensor_data' (<- shared array); mutate 'sensors')
     # Use appropriate row of array, going from 0 to 9 repeatedly
     sensor_data_index = (sensor_data_index + 1) % 10
-    sensors = [fuzz(d) for d in sensor_data[sensor_data_index][:13]] + list(sensor_data[sensor_data_index][13:]) #boolean IR doesn't need noise
+    sensors = [fuzz(d) for d in sensor_data[sensor_data_index]]
 
     # Incoming sensor data: (15 floats)
     # pres0, pres1, pres2, pres3, therm0, therm1, therm2, therm3, therm4,
@@ -154,7 +154,6 @@ def run():
                 sensors[i] = pres_cals[i](sensors[i])
             else: # thermistors
                 sensors[i] = therm_cals[i - 4](sensors[i])
-
         
     # Make fake UV and mass spec. data 
     #uva, uvb, uvc1, uvc2, uvd = make_fake_uv(sensor_failures[2]) -> removed uvd for now
