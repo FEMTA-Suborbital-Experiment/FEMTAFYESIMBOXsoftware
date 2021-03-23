@@ -8,17 +8,11 @@ from numba import njit, float64
 
 from constants import *
 from helpers import *
+from ..smbx_logging import Logger
 
 
-@njit((float64[:], float64[:], float64, float64), fastmath=True, cache=True)
-def main(t, h, main_freq, dt=2e-4):
-    # Set up shared memory
-    # sensor_mem = sm.SharedMemory(name="sensors")
-    sim_mem = sm.SharedMemory(name="simulation")
-    # sensor_data = np.ndarray(shape=(15,), dtype=np.float64, buffer=sensor_mem.buf) #Edit with correct size
-    sim_data = np.ndarray(shape=(4,), dtype=np.float64, buffer=sim_mem.buf)
-    # sim_data: [altitude, flowSol, ventSol, (now() - start_t).total_seconds()]
-
+@njit(signature=(float64[:], float64), fastmath=True, cache=True)
+def main(sim_data, dt, duration):
     # Variable initialization
     volWater_tank = VolWater0_tank                        #Initial volume of water in one Prop Tank [m^3]
     volWater_CC = 0                                       #Initial volume of water in Collection Chamber [m^3]
@@ -40,28 +34,13 @@ def main(t, h, main_freq, dt=2e-4):
     a_HFE_evap = A_HFE
     nAir_CC = N_Air_CC_0
 
-    sim_time = 0 # <- in-simulation time that we'll need to synchronize to real time
+    sim_time = 0
     
-    while sim_time < max(t):
-        sim_data[0] = np.interp(sim_time, t, h)
+    while True:
         ambientP = StandardAtm(sim_data[0])
 
         if volWater_tank - volWater_shut < 0:
             break #TODO: incorporate this into logging scheme (but the break is normal and expected)
-        
-        # Condition for beginning experiment
-        if sim_data[0] < 80000:
-            sim_data[2] = 1
-            sim_data[1] = 0
-        else:
-            sim_data[1] = 1 if sim_time > 200 else 2
-            sim_data[2] = 1
-        
-        # Conditions for loop termination
-        if sim_data[1] == 1 and volWater_shut == 0:
-            volWater_shut = 0.5 * volWater_tank
-        elif sim_data[1] == 2:
-            volWater_shut = 0
 
         # Volumetric Flow Rate of Liquid Water Propellant through one orifice [m^3/s]
         flo_water = sim_data[1] * CD_orifice * A_O * np.sqrt(2 * abs(tankPress - cCPress) / (Rho_water * (1 - Beta**4)))
@@ -71,6 +50,7 @@ def main(t, h, main_freq, dt=2e-4):
         # Update of Liquid Water Propellant Volumes in Tank & CC [m^3]
         volWater_tank -= flo_water * dt
         volWater_CC += flo_water * dt
+
 
         # -=-=- PROPELLANT TANK -=-=-
         # Mass of Gas in the tank [kg]
@@ -105,8 +85,8 @@ def main(t, h, main_freq, dt=2e-4):
             m_HFE_transfer = 0
             
         # Update mass of HFE liquid and vapor [kg]
-        m_HFE_liquid = m_HFE_liquid - m_HFE_transfer
-        m_HFE_vapor = m_HFE_transfer + m_HFE_vapor
+        m_HFE_liquid -= m_HFE_transfer
+        m_HFE_vapor += m_HFE_transfer
             
         # Update moles/volume of HFE vapor/liquid 
         vol_HFE_liquid = m_HFE_liquid / rho_HFE
@@ -122,6 +102,7 @@ def main(t, h, main_freq, dt=2e-4):
         # Temperature Update [K]
         Q_HFE = m_HFE_transfer * H_evap_HFE
         tankTempLiquid_HFE += (-Q_HFE / (m_HFE_liquid * Cp_HFEliquid))
+
 
         # -=-=- COLLECTION CHAMBER -=-=-
         # Surface Area of Collected Water [m^2]
@@ -153,7 +134,7 @@ def main(t, h, main_freq, dt=2e-4):
         nAir_CC -= n_Air_lost
 
         # Total mass of water vapor and liquid at current time [kg]
-        m_water_vapor = m_water_transfer - m_water_lost + m_water_vapor
+        m_water_vapor += m_water_transfer - m_water_lost
         m_water_liquid = (volWater_CC * Rho_water) - m_water_vapor
 
         # Pressure Update [Pa]
@@ -169,16 +150,43 @@ def main(t, h, main_freq, dt=2e-4):
             cCTempLiquid = T1 + T2 + T3
 
         sim_time += dt
+        if sim_time % duration < dt:
+            yield np.array([]) #TODO: fill out with appropriate data
 
-def run(dt, main_freq=100.0): #main_freq is frequency that main.py runs at (needed for synchronization)
+
+def run(dt, main_freq=100.0, sensitivity=10): #main_freq is frequency that main.py runs at (needed for synchronization)
     try:
-        t = np.load("time.npy")
-        h = np.load("altitude.npy")
+        # Set up shared memory
+        sensor_mem = sm.SharedMemory(name="sensors")
+        sim_mem = sm.SharedMemory(name="simulation")
+        sensor_data = np.ndarray(shape=(10, 15), dtype=np.float64, buffer=sensor_mem.buf) #Edit with correct size
+        sim_data = np.ndarray(shape=(4,), dtype=np.float64, buffer=sim_mem.buf)
+        # sim_data: [altitude, flowSol, ventSol, time since liftoff]
+
+        log = Logger("simulation")
+        log.start()
+
         start_t = time.time()
-        main(t, h, main_freq, dt)
-        print(time.time() - start_t)
-    finally:
+        period = 1 / main_freq
+
+        sim = main(sim_data, dt, period)
+
+        while True:
+            drift = abs((time.time() - start_t) - sim_data[3])
+            if drift > sensitivity * period:
+                log.write("WARNING: Simulation is out of sync with real time (drift = {1000 * drift}ms", "low_freq.txt", True)
+
+            start_next = time.time() + 10 * period
+            for i in range(10):
+                sensor_data[i][:] = next(sim)
+
+            duration = time.time() - start_next
+            if duration > 0:
+                time.sleep(duration)
+
+    except:
         #Close shared memory
-        # sensor_mem.close()
-        # valve_mem.close()
-        pass
+        sensor_mem.close()
+        sim_mem.close()
+
+        log.close()
