@@ -29,9 +29,16 @@ except TypeError:
     raise ConfigurationError("'Simulation Timestep' is missing or formatted incorrectly")
 
 
+# -=-=- Parse simulation sensitivity -=-=-
+try:
+    configs["sensitivity"] = float(src[2].strip())
+except TypeError:
+    raise ConfigurationError("'Simulation Sensitivity' is missing or formatted incorrectly")
+
+
 # -=-=- Parse event timing -=-=-
 events = ["Launch", "Start of 0g", "Apogee", "End of 0g", "Landing"]
-lines = src[2].strip().split("\n")
+lines = src[3].strip().split("\n")
 
 times = list()
 for i in range(5):
@@ -59,7 +66,7 @@ sensors = ["flow0", "flow1", "uv", "pres0", "pres1", "pres2", "pres3", "therm0",
 states = ["normal", "min", "max", "dead"]
 
 # First, get a list of tuples of the form (name, state, time), where name and state are numeric
-failures = src[3].strip().split("\n")
+failures = src[4].strip().split("\n")
 failures = [[i.strip() for i in line.split(";")][:3] for line in failures]
 
 for i in range(len(failures)):

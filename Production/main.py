@@ -217,7 +217,7 @@ if __name__ == "__main__":
         waitForI2CBusLock(1.0)      # Wait for exclusive access to I2C port (usually instant)
         digital_sensor_interface.connect()
 
-        venv = mp.Process(target=run_sim, kwargs={"dt": configs["dt"], "main_freq": 1/(configs["freqency"])})
+        venv = mp.Process(target=run_sim, kwargs={"dt": configs["dt"], "main_freq": 1/(configs["freqency"]), "sensitivity": configs["sensitivity"]})
         digital_sensor_interface.start() # Start mp Process
         venv.start()
         log.start()

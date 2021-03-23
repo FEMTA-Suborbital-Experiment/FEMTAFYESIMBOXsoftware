@@ -10,6 +10,16 @@
 
 
 
+:: Simulation Sensitivity
+Log and display a warning if the simulation gets too out of sync with real time.
+This is a multiple of the period of the regular simbox loop (so if the simbox freqency
+is 100 Hz and the sensitivity is 10, the maximum drift is 10 * 1 / (100 Hz) = 100 ms)
+::
+
+10
+
+
+
 :: Event Timing
 Each flight event (not configurable) has a time, in seconds, past launch.
 ::

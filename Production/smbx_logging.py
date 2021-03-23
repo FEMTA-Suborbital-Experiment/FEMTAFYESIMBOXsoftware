@@ -9,6 +9,7 @@
 # 
 # low_freq.txt     | Used by:
 #    "main" (main.py): Diagnostics and status updates, etc. Some msgs also printed
+#    "simulation" (sim.py): Warning about desync
 #    "debug" (i2c_interface.py, serial_interface.py, debug_gpio.py): 
 #            Status updates (simulated gpio, etc.). Some also printed.
 #    "arduino" (serial_interface.py): Infrequent status updates
