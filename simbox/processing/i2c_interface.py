@@ -3,8 +3,8 @@
 import time
 from datetime import datetime, timedelta
 
-from main import DEBUG
-from smbx_logging import Logger
+from ..__main__ import DEBUG
+from .smbx_logging import Logger
 
 
 if DEBUG:

@@ -1,0 +1,22 @@
+:: Simbox Frequency ::
+
+100 Hz
+
+:: Simulation Timestep ::
+
+2e-4 sec
+
+:: Simulation Sensitivity ::
+
+10
+
+:: Event Timing ::
+
+Launch;         0
+Start of 0g;  150
+Apogee;       300
+End of 0g;    500
+Landing;      650
+
+:: Sensor Failures ::
+

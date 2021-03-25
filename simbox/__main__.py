@@ -7,6 +7,7 @@ DEBUG = "debug" in map(str.lower, sys.argv)
 
 
 # Imports
+import math
 from datetime import datetime, timedelta
 now = datetime.now
 import multiprocessing as mp
@@ -19,18 +20,18 @@ from timeloop import Timeloop
 if DEBUG:
     import RPi.GPIO as GPIO
 else:
-    from debug_gpio import GPIO
+    from processing.debug_gpio import GPIO
 
-from config_parser import configs
-from flow_conversion import flow_to_bytes
-from mass_spec import make_fake_ms
-from uv_conversion import uv_conversion, make_fake_uv
-from add_noise import fuzz
-from condition_functions import poll_valve_states #, get_flight_conditions
-from Simulation.sim import run as run_sim
-from serial_interface import ArduinoI2CSimInterface
-from i2c_interface import i2c, waitForI2CBusLock # I2C set up in an import file
-from smbx_logging import Logger
+from processing.config_parser import configs
+from processing.flow_conversion import flow_to_bytes
+from processing.mass_spec import make_fake_ms
+from processing.uv_conversion import uv_conversion, make_fake_uv
+from processing.add_noise import fuzz
+from processing.condition_functions import poll_valve_states #, get_flight_conditions
+from processing.serial_interface import ArduinoI2CSimInterface
+from processing.i2c_interface import i2c, waitForI2CBusLock # I2C set up in an import file
+from processing.smbx_logging import Logger
+from simulation.sim import run as run_sim
 
 
 # Define Serial port info
@@ -73,6 +74,7 @@ sim_data = np.ndarray(shape=(4,), dtype=np.float64, buffer=sim_mem.buf)
 
 
 # GPIO setup
+GPIO.setmode(GPIO.BCM)
 GPIO.setup(RED, GPIO.OUT)
 GPIO.setup(GRN, GPIO.OUT)
 for pin in GPIO_PINS:
@@ -176,6 +178,13 @@ def run():
     digital_data = [error_state, *f0_data, *f1_data, *uv_data]
     
     # Prepare analog data to send to DACs
+    for i in range(9):
+        sensors[i] = min(255, math.floor(sensors[i]))
+    mass0 = min(255, math.floor(mass0))
+    mass1 = min(255, math.floor(mass1))
+    sensors[12] = min(255, math.floor(sensors[12]))
+    sensors[13] = min(255, math.floor(sensors[13]))
+
     analog_data_0 = [P[0], sensors[0], P[1], sensors[1],
                      P[2], sensors[2], P[3], sensors[3],
                      T[0], sensors[4], T[1], sensors[5],

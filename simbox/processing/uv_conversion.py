@@ -6,7 +6,7 @@
 
 from math import sin
 from random import randrange
-from common_library import twos_comp, sine_generator
+from .common_library import twos_comp, sine_generator
 
 STEP_SIZE = 0.1
 AMP_DIFF = 200

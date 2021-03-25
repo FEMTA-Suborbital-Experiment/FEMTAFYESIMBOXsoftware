@@ -1,7 +1,7 @@
 # Stand-in GPIO class for debug mode testing
 
 import time
-from smbx_logging import Logger
+from .smbx_logging import Logger
 
 class GPIO:
     IN = "in"

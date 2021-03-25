@@ -1,6 +1,6 @@
 # Simple function to make sine-wave mass-spec data
 
-from common_library import sine_generator
+from .common_library import sine_generator
 
 STEP_SIZE = 0.1
 AMP0 = 50
