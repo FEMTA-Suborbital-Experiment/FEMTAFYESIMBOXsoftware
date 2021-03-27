@@ -1,10 +1,16 @@
 # FYESIMBOXsoftware
-FYE SIMBOX Software for pi and arduino
+FYE SIMBOX Software for Pi and Arduino
 
 ## Directories:
 
+### simbox
+Main package. Copy in its entirety to the Pi. Run with "python3.8 -m simbox" (make sure the virtual environment is activated)
+
+### experiment_logs
+Holds log files from each experiment
+
 ### Production
-Files to be used in actual simbox operation
+Files to be used in actual simbox operation (but not on the Pi; run.bat for example)
 
 ### arduino testing: 
 Scripts for Arduino for testing
