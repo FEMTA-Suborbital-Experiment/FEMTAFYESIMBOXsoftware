@@ -32,8 +32,9 @@ class Logger:
     
     instances = 0
     file_objects = dict()
-    directory = f"/home/pi/Project_Files/experiment_logs/{time.strftime('%y-%m-%dT%H:%M')}/" # unique directory name per experiment
-    os.mkdir(directory)
+    directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "experiment_logs", f"{time.strftime('%y-%m-%dT%H-%M')}", "") # unique directory name per experiment
+    print(directory)
+    os.makedirs(directory, exist_ok=True)
 
     def __init__(self, name):
         self.name = ascii(name)[1:-1]
