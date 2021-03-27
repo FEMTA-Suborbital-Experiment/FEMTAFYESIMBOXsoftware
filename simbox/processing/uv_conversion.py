@@ -6,7 +6,7 @@
 
 from math import sin
 from random import randrange
-from common_library import twos_comp, sine_generator
+from .common_library import twos_comp, sine_generator
 
 STEP_SIZE = 0.1
 AMP_DIFF = 200
@@ -51,7 +51,7 @@ def uv_conversion(uva, uvb, uvc1, uvc2): #, uvd):
 
     # Scale UVA data to a 16-bit resolution
     uva = twos_comp(int(uva))
-    #uvd = twos_comp(int(uvd))  where did this come from? UV sensor only has A, B, C1, and C2
+    #uvd = twos_comp(int(uvd))  
     uvb = twos_comp(int(uvb))
     uvc1 = twos_comp(int(uvc1))
     uvc2 = twos_comp(int(uvc2))

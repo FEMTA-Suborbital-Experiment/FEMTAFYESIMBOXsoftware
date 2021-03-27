@@ -6,9 +6,9 @@ import multiprocessing.shared_memory as sm
 import numpy as np
 from numba import njit, float64
 
-from constants import *
-from helpers import *
-from ..smbx_logging import Logger
+from .constants import *
+from .helpers import *
+from ..processing.smbx_logging import Logger
 
 
 @njit(signature=(float64[:], float64), fastmath=True, cache=True)

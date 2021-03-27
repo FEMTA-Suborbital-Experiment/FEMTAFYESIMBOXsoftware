@@ -1,13 +1,14 @@
 # Parser for config.txt. This will return 'machine-readable' configurations
 # to the main script from a human-readable file.
 
+
 class ConfigurationError(Exception):
     """Errors raised when parsing config file"""
     def __init__(self, message):
         self.message = message
 
 try:
-    with open("Production/config.txt", "r") as cfg: #maybe need to modify path here for the pi?
+    with open("/home/pi/Project_Files/simbox/config.txt", "r") as cfg:
         src = cfg.read().split("::")[2::2]
 except FileNotFoundError:
     raise ConfigurationError("The configuration file was not found")
@@ -17,7 +18,7 @@ configs = dict() #To be filled and outputted
 
 # -=-=- Parse simbox frequency -=-=-
 try:
-    configs["freqency"] = int(src[0].strip().split()[0])
+    configs["frequency"] = int(src[0].strip().split()[0])
 except TypeError:
     raise ConfigurationError("'Simbox Frequency' is missing or formatted incorrectly")
 
@@ -67,7 +68,10 @@ states = ["normal", "min", "max", "dead"]
 
 # First, get a list of tuples of the form (name, state, time), where name and state are numeric
 failures = src[4].strip().split("\n")
-failures = [[i.strip() for i in line.split(";")][:3] for line in failures]
+if len(failures) > 1 and ";" in failures[0]:
+    failures = [[i.strip() for i in line.split(";")][:3] for line in failures]
+else:
+    failures = list()
 
 for i in range(len(failures)):
     if failures[i][0].lower() in sensors:

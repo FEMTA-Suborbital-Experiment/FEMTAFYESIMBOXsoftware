@@ -11,26 +11,37 @@
 #    "main" (main.py): Diagnostics and status updates, etc. Some msgs also printed
 #    "simulation" (sim.py): Warning about desync
 #    "debug" (i2c_interface.py, serial_interface.py, debug_gpio.py): 
-#            Status updates (simulated gpio, etc.). Some also printed.
+#            Status updates. Some also printed.
 #    "arduino" (serial_interface.py): Infrequent status updates
 #    "I2C" (serial_interface.py): I2C locking function only
 #
 # arduino.txt      | Used by:
-#    "arduino" (serial_interface.py): Data sent to and recieved from arduino
+#    "arduino" (serial_interface.py): Data sent to and received from arduino
 #    "debug" (serial_interface.py): Data that would be sent to arduino
 #
 # i2c_debug.txt    | Used by:
 #    "debug" (i2c_interface.py): Every write to the debug I2C (high freq)
+#
+# gpio_debug.txt   | Used by:
+#    "debug" (debug_gpio.py): Reads from simulated GPIO pins.
 
+import os
 import time
 
 class Logger:
     
+    # count of instances and file obj dict are shared by all instances per process
+    # (but not between processes)
     instances = 0
     file_objects = dict()
+    
+    # unique directory name per experiment
+    directory = f"/home/pi/Project_Files/experiment_logs/{time.strftime('%y-%m-%dT%H:%M')}/"
+    if not os.path.exists(directory):
+        os.mkdir(directory)
 
     def __init__(self, name):
-        self.name = ascii(name)
+        self.name = ascii(name)[1:-1]
         self.start_t = None
 
     def __enter__(self):
@@ -52,17 +63,15 @@ class Logger:
                 fo.close()
 
     def write(self, text, filename, print_=False, **print_kwargs):
-        assert self.start_t is not None, f"Logger \"{self.name}\" has not had \"start()\" called"
+        assert self.start_t is not None, f"Logger \"{self.name}\" has not had start() called"
 
         if filename not in Logger.file_objects.keys():
-            # open with mode x because we neither want to overwrite a 
-            # previous log nor combine two logs together
             try:
-                Logger.file_objects[filename] = open(filename, "x", encoding="ascii")
+                Logger.file_objects[filename] = open(Logger.directory + filename, "a", encoding="ascii")
             except FileExistsError as e:
                 raise Exception(f"log file \"{filename}\" already exists") from e 
         
-        Logger.file_objects[filename].write(f"{self.name} [{time.perf_counter() - self.start_t}]: {text!a}\n")
+        Logger.file_objects[filename].write(f"{self.name} [T+{time.perf_counter() - self.start_t:.3f}]: {ascii(text)[1:-1]}\n")
 
         if print_:
             # Print logged message to terminal. These should be infrequent and

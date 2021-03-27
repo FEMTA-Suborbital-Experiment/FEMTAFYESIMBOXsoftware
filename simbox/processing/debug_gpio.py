@@ -1,13 +1,14 @@
 # Stand-in GPIO class for debug mode testing
 
 import time
-from smbx_logging import Logger
+from .smbx_logging import Logger
 
 class GPIO:
     IN = "in"
     OUT = "out"
     HIGH = True
     LOW = False
+    BCM = 0
     _pins = dict()
     start_t = time.time() #not exactly correct, but good enough
 
@@ -32,11 +33,15 @@ class GPIO:
         if pin in cls._pins.keys() and cls._pins[pin] == cls.IN:
             new_state = cls._get_new_state(pin, time.time())
             with Logger("debug") as log:
-                log.write(f"GPIO {pin} input {'high' if new_state else 'low'}", "low_freq.txt")
+                log.write(f"GPIO {pin} read {'high' if new_state else 'low'}", "gpio_debug.txt")
             return new_state
 
     @classmethod
     def output(cls, pin, state):
         if pin in cls._pins.keys() and cls._pins[pin] == cls.OUT:
             with Logger("debug") as log:
-                log.write(f"GPIO {pin} output {'high' if state else 'low'}", "low_freq.txt")
+                log.write(f"GPIO {pin} write {'high' if state else 'low'}", "low_freq.txt")
+
+    @classmethod
+    def setmode(cls, mode):
+        pass
