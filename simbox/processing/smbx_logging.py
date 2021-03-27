@@ -30,11 +30,15 @@ import time
 
 class Logger:
     
+    # count of instances and file obj dict are shared by all instances per process
+    # (but not between processes)
     instances = 0
     file_objects = dict()
-    directory = os.path.join(os.path.dirname(__file__), "..", "experiment_logs", time.strftime('%y-%m-%dT%H:%M'))
+
     # unique directory name per experiment
-    os.mkdir(directory)
+    directory = f"/home/pi/Project_Files/experiment_logs/{time.strftime('%y-%m-%dT%H:%M')}/"
+    if not os.path.exists(directory):
+        os.mkdir(directory)
 
     def __init__(self, name):
         self.name = ascii(name)[1:-1]
@@ -62,10 +66,8 @@ class Logger:
         assert self.start_t is not None, f"Logger \"{self.name}\" has not had start() called"
 
         if filename not in Logger.file_objects.keys():
-            # open with mode x because we neither want to overwrite a 
-            # previous log nor combine two logs together
             try:
-                Logger.file_objects[filename] = open(Logger.directory + filename, "x", encoding="ascii")
+                Logger.file_objects[filename] = open(Logger.directory + filename, "a", encoding="ascii")
             except FileExistsError as e:
                 raise Exception(f"log file \"{filename}\" already exists") from e 
         
