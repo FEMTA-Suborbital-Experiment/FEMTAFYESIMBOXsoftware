@@ -1,13 +1,13 @@
 # Functions to take the flow and temerature data from the I2C flow sensors
 # and process it into the series of bytes that the flight computer expects.
 
+from .common_library import byte, twos_comp
 
-def crc(byte1, byte0):
-    message = 256 * byte1 + byte0
+def crc(message):
     poly, val = 0x31, 0xff
-    for b in message:
+    for b in map(byte, message): # make inputs safe
         val ^= b
-        for i in range(8):
+        for _ in range(8):
             if val & 0x80:
                 val = ((val << 1) ^ poly) % 256
             else:
@@ -15,11 +15,11 @@ def crc(byte1, byte0):
     return val
 
 
-def twos_comp(num):
-    return num if num >= 0 else 65536 + num
-
-
 def flow_to_bytes(flow_data, temp_data, state): #Input flow in ml/min, temp in C
+    #Convert to integers
+    flow_data = round(flow_data)
+    temp_data = round(temp_data)
+    
     #Handle errors
     if state == 1: #min
         return [0] * 9
@@ -50,8 +50,8 @@ def flow_to_bytes(flow_data, temp_data, state): #Input flow in ml/min, temp in C
     output[7] = flags
     
     #Calculate crcs
-    output[2] = crc(output[0], output[1])
-    output[5] = crc(output[3], output[4])
-    output[8] = crc(output[6], output[7])
+    output[2] = crc((output[0], output[1]))
+    output[5] = crc((output[3], output[4]))
+    output[8] = crc((output[6], output[7]))
     
     return output

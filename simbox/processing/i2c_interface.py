@@ -1,19 +1,22 @@
 # Function to wait for I2C lock to be given
 
+import sys
 import time
-from datetime import datetime, timedelta
 
-from ..__main__ import DEBUG
 from .smbx_logging import Logger
+
+
+DEBUG = "debug" in sys.argv
 
 
 if DEBUG:
     class I2C():
         """Stand-in class for debugging I2C interface"""
-        def __init__(self):
-            self.log = Logger("debug")
-            self.log.start()
+        
+        log = Logger("debug")
+        log.start()
 
+        def __init__(self):
             self._have_lock = False
             self._lock_t = -1
 
@@ -24,7 +27,7 @@ if DEBUG:
                 return time.perf_counter() - self._lock_t > 0.25
 
         def writeto(self, address, data):
-            self.log.write(f"{data} -> {address}", "i2c_debug.txt")
+            self.log.write(f"I2C {data} to {address:#x}", "i2c_debug.txt")
 
         def unlock(self):
             pass
@@ -50,10 +53,9 @@ def waitForI2CBusLock(timeout=1.0):
     log.start()
 
     log.write("Waiting for lock on I2C bus to be granted", "low_freq.txt", True)
-    t_start = datetime.now()
-    t_delta = timedelta(seconds=timeout)
+    t_start = time.time()
     while not i2c.try_lock():
-        if datetime.now() - t_start > t_delta:
+        if time.time() - t_start > timeout:
             raise RuntimeError("Waiting for I2C lock timed out")
         print(".", end='')
         time.sleep(0.1)  # Don't hog the processor busywaiting

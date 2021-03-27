@@ -1,8 +1,6 @@
 # Parser for config.txt. This will return 'machine-readable' configurations
 # to the main script from a human-readable file.
 
-print("name:", __name__)
-print("package:", __package__)
 
 class ConfigurationError(Exception):
     """Errors raised when parsing config file"""
@@ -20,7 +18,7 @@ configs = dict() #To be filled and outputted
 
 # -=-=- Parse simbox frequency -=-=-
 try:
-    configs["freqency"] = int(src[0].strip().split()[0])
+    configs["frequency"] = int(src[0].strip().split()[0])
 except TypeError:
     raise ConfigurationError("'Simbox Frequency' is missing or formatted incorrectly")
 

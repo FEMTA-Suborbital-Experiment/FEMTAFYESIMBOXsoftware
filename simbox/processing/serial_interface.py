@@ -2,7 +2,6 @@
 
 import time
 import multiprocessing as mp
-
 from .smbx_logging import Logger
 
 COMMAND_LEN = 27
@@ -15,6 +14,7 @@ class ArduinoI2CSimInterface(mp.Process):
         mp.Process.__init__(self, name='ArduinoI2CSimInterface', daemon=True)
         
         self.log = Logger("arduino")
+        self.log.start()
         self.debug = debug
 
         if not self.debug:
@@ -26,6 +26,7 @@ class ArduinoI2CSimInterface(mp.Process):
         
         else:
             self.debug_log = Logger("debug")
+            self.debug_log.start()
             self.debug_log.write("Skipping actual initialization of serial object", "low_freq.txt", True)
 
         self.processed = mp.Event() # Event sync primitive to verify a command has been processed
@@ -79,7 +80,7 @@ class ArduinoI2CSimInterface(mp.Process):
             while True:
                 time.sleep(0.001)
                 if not self.processed.is_set():
-                    self.debug_log.write("Setting command proccessing complete flag", "arduino.txt")
+                    self.debug_log.write("Setting command processing complete flag", "arduino.txt")
                     self.processed.set()
 
     # Method to send a command out to the Arduino
@@ -94,14 +95,15 @@ class ArduinoI2CSimInterface(mp.Process):
             cmd = bytes(command)
             cmd_str = f"{' '.join(f'{b:#04x}' for b in cmd)}"
             if self.debug:
-                self.debug_log.write(f"Would have sent {cmd_str} over serial", "arduino.txt")
+                self.debug_log.write(cmd_str, "arduino.txt")
                 sent = cmd
             else:
-                self.log.write("Sending command " + cmd_str, "")
+                self.log.write(cmd_str, "arduino.txt")
                 sent = self.sp.write(cmd)
             self.processed.clear()
         else:
             self.log.write("WARNING: Arduino over serial port is not ready to receive another command", "low_freq.txt", True)
+            sent, cmd = None, None
         
         return sent, cmd
 
