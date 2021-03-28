@@ -11,7 +11,7 @@ from .helpers import *
 from ..processing.smbx_logging import Logger
 
 
-@njit((float64[:], float64, float64), fastmath=True, cache=False) #pickling error when cache=True ???
+@njit((float64[:], float64, float64), fastmath=True, cache=False) #pickling error when cache=True (?!?)
 def main(sim_data, dt, duration):
     # Variable initialization
     volWater_tank = VolWater0_tank                        #Initial volume of water in one Prop Tank [m^3]
@@ -180,8 +180,7 @@ def run(dt, main_freq=100.0, sensitivity=10): #main_freq is frequency that main.
         while True:
             drift = abs((time.time() - start_t) - sim_data[3])
             if drift > sensitivity * period:
-                pass
-                #log.write(f"WARNING: Simulation is out of sync with real time (drift = {1000 * drift}ms)", "low_freq.txt", True)
+                log.write(f"WARNING: Simulation is out of sync with real time (drift = {1000 * drift}ms)", "low_freq.txt", True)
 
             start_next = time.time() + 10 * period
             for i in range(10):
