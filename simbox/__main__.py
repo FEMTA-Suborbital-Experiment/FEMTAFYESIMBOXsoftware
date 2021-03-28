@@ -4,6 +4,10 @@
 import sys
 DEBUG = "debug" in sys.argv
 
+
+import os #for debugging only
+
+
 # Imports
 import time
 from datetime import timedelta
@@ -115,8 +119,6 @@ def run():
         GPIO.output(GRN, GPIO.HIGH)
         start_t = time.time()
 
-    assert time.time() - start_t < 5
-
     # Determine new sensor failures
     for period in configs["dig_error_states"]:
         if period[0] <= time.time() - start_t < period[1]:
@@ -225,10 +227,16 @@ if __name__ == "__main__":
         waitForI2CBusLock(1.0)      # Wait for exclusive access to I2C port (usually instant)
         digital_sensor_interface.connect()
 
-        venv = mp.Process(target=run_sim, kwargs={"dt": configs["dt"], "main_freq": 1/(configs["frequency"]), "sensitivity": configs["sensitivity"]})
+        venv = mp.Process(name="venv sim", target=run_sim, kwargs={"dt": configs["dt"], "main_freq": configs["frequency"], "sensitivity": configs["sensitivity"]})
         digital_sensor_interface.start() # Start mp Process
         venv.start()
         log.start()
+
+        log.write(f"venv pid: {venv.pid}, serial pid: {digital_sensor_interface.pid}, main pid: {os.getpid()}", "low_freq.txt", True)
+        import psutil
+        for p in psutil.Process(os.getpid()).children(recursive=True):
+            print(p.pid, p.name())
+
         tl.start(block=True)
         venv.join()
 

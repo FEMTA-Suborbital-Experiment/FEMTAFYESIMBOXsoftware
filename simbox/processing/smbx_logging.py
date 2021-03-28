@@ -34,7 +34,7 @@ class Logger:
     # (but not between processes)
     instances = 0
     file_objects = dict()
-    
+
     # unique directory name per experiment
     directory = f"/home/pi/Project_Files/experiment_logs/{time.strftime('%y-%m-%dT%H:%M')}/"
     if not os.path.exists(directory):

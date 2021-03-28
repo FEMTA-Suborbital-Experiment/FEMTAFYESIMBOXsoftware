@@ -24,7 +24,8 @@ if DEBUG:
             if self._lock_t == -1:
                 self._lock_t = time.perf_counter()
             else:
-                return time.perf_counter() - self._lock_t > 0.25
+                self._have_lock = time.perf_counter() - self._lock_t > 0.25
+                return self._have_lock
 
         def writeto(self, address, data):
             self.log.write(f"I2C {data} to {address:#x}", "i2c_debug.txt")
@@ -52,7 +53,7 @@ def waitForI2CBusLock(timeout=1.0):
     log = Logger("I2C")
     log.start()
 
-    log.write("Waiting for lock on I2C bus to be granted", "low_freq.txt", True)
+    log.write("Waiting for lock on I2C bus to be granted", "low_freq.txt", True, end="")
     t_start = time.time()
     while not i2c.try_lock():
         if time.time() - t_start > timeout:
