@@ -41,14 +41,14 @@ SERIAL_BAUD = 115200
 DAC = (0x28, 0x29) #DAC I2C addresses
 # DAC0: pressure sensors & thermistors 1-4
 # DAC1: mass spec, IR flow & thermistor 5
-P = (0x0, 0x1, 0x2, 0x3) #Pressure sensor DAC channels
-T = (0x4, 0x5, 0x6, 0x7, 0x0) #Thermistor DAC channels
+P = (0x4, 0x5, 0x6, 0x7) #Pressure sensor DAC channels
+T = (0x0, 0x1, 0x2, 0x3, 0x0) #Thermistor DAC channels
 MS = (0x4, 0x5) #Mass spec DAC channels
 IR = (0x6, 0x7) #IR flow sensor DAC channels
 
 
 # Define GPIO pins
-GPIO_PINS = (4, 14, 15, 17, 18, 27) #not set in stone
+GPIO_PINS = (23, 24, 10, 9, 8, 7) #flow sol 1 open, flow sol 1 close, flow2, vent
 RED, GRN = 21, 13
 
 
@@ -88,6 +88,7 @@ h = np.load("simbox/simulation/altitude.npy")
 t = np.load("simbox/simulation/time.npy")
 altitude = 0
 sensor_data_index = -1 #since the increment is done before the read, and we want to start at 0
+valve_states = [0, 0, 1] #flow 1, flow 2, vent. 0 = closed, 1 = open
 
 
 """
@@ -185,11 +186,11 @@ def run():
 
     analog_data_0 = [P[0], sensors[0], P[1], sensors[1],
                      P[2], sensors[2], P[3], sensors[3],
-                     T[0], sensors[4], T[1], sensors[5],
-                     T[2], sensors[6], T[3], sensors[7]]
-    analog_data_1 = [MS[0], mass0, MS[1], mass1,
-                     IR[0], sensors[12], IR[1], sensors[13], 
                      T[4], sensors[8]]
+    analog_data_1 = [T[0], sensors[4], T[1], sensors[5],
+                     T[2], sensors[6], T[3], sensors[7],
+                     MS[0], mass0, MS[1], mass1,
+                     IR[0], sensors[12], IR[1], sensors[13]]
     
     # Output data
     i2c.writeto(DAC[0], analog_data_0)
@@ -197,7 +198,13 @@ def run():
     digital_sensor_interface.sendCommand(digital_data)
     
     # Valve feedback
-    valve_states = [GPIO.input(pin) for pin in GPIO_PINS]
+    for index, name in [(0, "Flow Solenoid 1"), (1, "Flow Solenoid 2"), (2, "Vent Solenoid")]:
+        if GPIO.input(GPIO_PINS[2 * index]): #open
+            log.write(f"Open commanded for {name}", "low_freq.txt", True)
+            valve_states[index] = 1
+        if GPIO.input(GPIO_PINS[2 * index + 1]): #close
+            log.write(f"Close commanded for {name}", "low_freq.txt", True)
+            valve_states[index] = 0
 
     # Set Conditions
     flowSol, ventSol = poll_valve_states(valve_states) #sim_cond
