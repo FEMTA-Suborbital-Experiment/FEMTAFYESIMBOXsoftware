@@ -1,3 +1,3 @@
 @ECHO OFF
-scp config.txt pi@FEMTAsimboxPi.local:Project_Files/Production
-ssh pi@FEMTAsimboxPi.local "source ~/environments/simbox-env/bin/activate; python3.8 -m ~/Project_Files/simbox debug"
+scp config.txt pi@FEMTAsimboxPi.local:FEMTAFYESIMBOXsoftware/simbox
+ssh pi@FEMTAsimboxPi.local "source ~/environments/simbox-env/bin/activate; python3.8 -m ~/FEMTAFYESIMBOXsoftware/simbox debug"

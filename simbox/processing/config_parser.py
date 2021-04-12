@@ -8,7 +8,7 @@ class ConfigurationError(Exception):
         self.message = message
 
 try:
-    with open("/home/pi/Project_Files/simbox/config.txt", "r") as cfg:
+    with open("/home/pi/FEMTAFYESIMBOXsoftware/simbox/config.txt", "r") as cfg:
         src = cfg.read().split("::")[2::2]
 except FileNotFoundError:
     raise ConfigurationError("The configuration file was not found")
