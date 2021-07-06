@@ -12,7 +12,7 @@ def num_to_ip(num):
     
     
 def ping(ip_num):
-    command = ["ping", "-n", "1", num_to_ip(ip_num)]
+    command = ["ping", "-n", "1", "-w", "1", num_to_ip(ip_num)]
     print(" ".join(command))
     subprocess.run(command, stdout=subprocess.DEVNULL)
 
