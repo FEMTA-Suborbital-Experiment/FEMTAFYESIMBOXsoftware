@@ -39,8 +39,8 @@ SERIAL_BAUD = 115200
 
 # Define addresses
 DAC = (0x28, 0x29) #DAC I2C addresses
-# DAC0: pressure sensors & thermistors 1-4
-# DAC1: mass spec, IR flow & thermistor 5
+# DAC0: pressure sensors & thermistor 5
+# DAC1: mass spec, IR flow & thermistors 1-4
 P = (0x4, 0x5, 0x6, 0x7) #Pressure sensor DAC channels
 T = (0x0, 0x1, 0x2, 0x3, 0x0) #Thermistor DAC channels
 MS = (0x4, 0x5) #Mass spec DAC channels
@@ -199,10 +199,10 @@ def run():
     
     # Valve feedback
     for index, name in [(0, "Flow Solenoid 1"), (1, "Flow Solenoid 2"), (2, "Vent Solenoid")]:
-        if GPIO.input(GPIO_PINS[2 * index]): #open
+        if not GPIO.input(GPIO_PINS[2 * index]): #open; inverted logic
             log.write(f"Open commanded for {name}", "low_freq.txt", True)
             valve_states[index] = 1
-        if GPIO.input(GPIO_PINS[2 * index + 1]): #close
+        if not GPIO.input(GPIO_PINS[2 * index + 1]): #close; inverted logic
             log.write(f"Close commanded for {name}", "low_freq.txt", True)
             valve_states[index] = 0
 
